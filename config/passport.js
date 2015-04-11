@@ -1,3 +1,7 @@
+// load the mailer
+var config = require('../config/config');
+var Mailgun = require('mailgun').Mailgun;
+var mg = new Mailgun(config.mailgun);
 
 // load all the things we need
 var LocalStrategy   = require('passport-local').Strategy;
@@ -71,6 +75,16 @@ module.exports = function(passport) {
                     if (err)
                         throw err;
                     return done(null, newUser);
+                });
+
+                // mail the user a hello!
+                mg.sendText('Bitmail Ninja <postman@bitmail.ninja>', [email],
+                  'Signup Complete',
+                  'Bitmail Ninja Protection: Activate!!!',
+                  'noreply@example.com', {},
+                  function(err) {
+                    if (err) console.log('Oh noes: ' + err);
+                    else     console.log('Success');
                 });
             }
 

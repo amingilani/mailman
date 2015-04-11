@@ -14,6 +14,7 @@ module.exports = {
           return "mongodb://" + this.user + ":" + this.pass + "@" + this.host;
           }
 
-  }
+  },
+  mailgun: "key-b9d0baf1ac20ef3056c83731bc0abe5a"
 
 };
