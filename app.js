@@ -7,9 +7,9 @@ var bodyParser = require('body-parser');
 var mongoose = require('mongoose');
 var passport = require('passport');
 var flash    = require('connect-flash');
-var config = require('./config');
+var config = require('./config/config');
 var session      = require('express-session');
-var secret = "KkldjzIRu85BZLObYMZSEas1zLqLN5LVQ5DXtnBCAAD3EKI";
+var secret = config.secret; // set the secret
 
 /* refactor when app works
 var routes = require('./routes/index');
