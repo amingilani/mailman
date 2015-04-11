@@ -16,6 +16,10 @@ var routes = require('./routes/index');
 var users = require('./routes/users');
 */
 
+mongoose.connect(config.db.url()); // connect to the db
+
+require('./config/passport')(passport); // pass passport for configuration
+
 var app = express();
 
 // view engine setup

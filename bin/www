@@ -7,6 +7,7 @@
 var app = require('../app');
 var debug = require('debug')('mail-ninja-passport:server');
 var http = require('http');
+var passport = require('passport');
 
 /**
  * Get port from environment and store in Express.
