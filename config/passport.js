@@ -78,9 +78,10 @@ module.exports = function(passport) {
                 });
 
                 // mail the user a hello!
-                mg.sendText('Bitmail Ninja <postman@bitmail.ninja>', [email],
+                mg.sendText('Mailman Ninja <postman@mailman.ninja>', [email],
                   'Signup Complete',
-                  'Bitmail Ninja Protection: Activate!!!',
+                  'Cool, you\'ve been signed up. Jabh launch hou gee tou bata' +
+                  ' doonga. Tabh takk hold kerro. Thanks though!',
                   'noreply@example.com', {},
                   function(err) {
                     if (err) console.log('Oh noes: ' + err);
