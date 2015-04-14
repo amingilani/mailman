@@ -1,6 +1,22 @@
 {
-  "name": "mail-ninja-passport",
-  "version": "0.0.0",
+  "name": "mailman-ninja",
+  "version": "0.0.1",
+  "description": "Bitcoin powered mail filtering.",
+  "homepage": "http://mailman.ninja",
+  "author": "Amin Shah Gilani <aminshahgilani@gmail.com>",
+  "license": "AGPL",
+  "bugs": {
+    "url": "https://github.com/amingilani/mailman-ninja/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/amingilani/mailman-ninja.git"
+  },
+  "keywords": [
+    "bitcoin",
+    "email",
+    "spam"
+  ],
   "private": true,
   "scripts": {
     "start": "node ./bin/www"
@@ -27,4 +43,5 @@
     "passport-twitter": "^1.0.3",
     "serve-favicon": "~2.2.0"
   }
+
 }
