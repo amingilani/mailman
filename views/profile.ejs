@@ -12,23 +12,16 @@
 <body>
 <div class="container">
 
-    <div class="page-header text-center">
-        <h1><span class="fa fa-anchor"></span> Profile Page</h1>
-        <a href="/logout" class="btn btn-default btn-sm">Logout</a>
-    </div>
+    <div class="jumbotron text-center">
+        <h1><span class="fa fa-envelope-o"></span></h1>
+             <h3>Done <span class="fa fa-heart"></span></h3>
+                    <p>
+                      Your email address <em><%= user.local.email %></em>
+                      has been added to the invite list. You'll receive
+                      an update soon!
+                    </p>
 
-    <div class="row">
-
-        <!-- LOCAL INFORMATION -->
-        <div class="col-sm-6">
-            <div class="well">
-                <h3><span class="fa fa-user"></span>Profile</h3>
-                    <p>Haan, hou gaya, abh ja sakthay hou.</p>
-                    <p></p>
-                    <p><strong>email</strong>: <%= user.local.email %></p>
-
-
-            </div>
+      <a href="/logout" class="btn btn-default btn-sm"> Logout</a>
         </div>
 
     </div>
