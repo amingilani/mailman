@@ -78,11 +78,11 @@ module.exports = function(passport) {
                 });
 
                 // mail the user a hello!
-                mg.sendText('Mailman Ninja <postman@mailman.ninja>', [email],
-                  'Signup Complete',
-                  'Cool, you\'ve been signed up. Jabh launch hou gee tou bata' +
-                  ' doonga. Tabh takk hold kerro. Thanks though!',
-                  'noreply@example.com', {},
+                mg.sendText('Mailman <postman@mailman.ninja>', [email],
+                  'Hello from Mailman',
+                  'You\'re on the Mailman list. We\'ll send you an' +
+                  ' invite the moment more accounts are available!',
+                  'noreply@mailman.ninja', {},
                   function(err) {
                     if (err) console.log('Oh noes: ' + err);
                     else     console.log('Success');
