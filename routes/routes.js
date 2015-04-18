@@ -1,3 +1,6 @@
+var express = require('express'),
+    Mail = require('../models/email.js');
+
 module.exports = function(app, passport) {
 
     // =====================================
@@ -59,6 +62,43 @@ module.exports = function(app, passport) {
         req.logout();
         res.redirect('/');
     });
+
+    // =====================================
+    // API =================================
+    // =====================================
+    var apiRouter = express.Router();
+
+    apiRouter.get('/mail', function (req, res){
+      res.send('yo');
+
+    });
+    apiRouter.post('/mail', function (req, res){
+      console.log(req.body.lol);
+      res.send(req.body['lol-hello']);
+
+      var mail = new Mail;
+      mail.recipient = req.body.recipient;
+      mail.sender = req.body.sender;
+      mail.from = req.body.from;
+      mail.subject = req.body.subject;
+      mail.bodyPlain = req.body['body-plain'];
+      mail.strippedText = req.body['stripped-text'];
+      mail.strippedSignature = req.body['stripped-signature'];
+      mail.bodyHtml = req.body['body-html'];
+      mail.strippedHtml = req.body['stripped-html'];
+      mail.attachmentCount = req.body['attachment-count'];
+      mail.attachmentx = req.body['attachment-x'];
+      mail.messageHeaders = req.body['message-headers'];
+      mail.contentIdMap = req.body['content-id-map'];
+      // makes a new payment address
+//    mail.btcAddress = genAddress();
+      // save mail and issue a callback
+//    mail.save(callback);
+      console.log(mail);
+
+    });
+
+    app.use('/api', apiRouter);
 };
 
 // route middleware to make sure a user is logged in
