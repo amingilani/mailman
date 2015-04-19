@@ -1,5 +1,20 @@
 var express = require('express'),
-    Mail = require('../models/email.js');
+
+    // the Mail Model
+    Mail = require('../models/email.js'),
+
+    // Configuration
+    config = require('../config/config'),
+
+    // coinbase
+    Client = require('coinbase').Client,
+    client = new Client({
+      'apiKey'    : config.coinbase.testnet.key,
+      'apiSecret' : config.coinbase.testnet.secret,
+      'baseApiUri': 'https://api.sandbox.coinbase.com/v1/'
+    });
+    var Account   = require('coinbase').model.Account;
+    var btcAccount = new Account(client, {'id': '55335c04fb9854796c00000c'});
 
 module.exports = function(app, passport) {
 
@@ -76,7 +91,7 @@ module.exports = function(app, passport) {
       console.log(req.body.lol);
       res.send(req.body['lol-hello']);
 
-      var mail = new Mail;
+      var mail = new Mail();
       mail.recipient = req.body.recipient;
       mail.sender = req.body.sender;
       mail.from = req.body.from;
@@ -92,10 +107,25 @@ module.exports = function(app, passport) {
       mail.contentIdMap = req.body['content-id-map'];
       // makes a new payment address
 //    mail.btcAddress = genAddress();
-      // save mail and issue a callback
-//    mail.save(callback);
-      console.log(mail);
 
+      // save mail and setup a new wallet by the id
+      mail.save(btcAccount.createAddress({
+        "callback_url": 'http://mailman.ninja/paid/' + mail.id,
+        "label": mail.id
+        }, function(err, address) {
+          if (err) {console.log(err);} else {console.log(address);}
+          // TODO send a reply mail containing the payment address
+      }));
+
+    });
+
+    apiRouter.post('/paid/:mail_id', function (req, res){
+      // select the email
+      Mail.findById(req.params.mail_id, function (err, mail) {
+        // TODO deliver the mail
+
+        // TODO confirm sent to the sender
+      });
     });
 
     app.use('/api', apiRouter);
@@ -111,3 +141,10 @@ function isLoggedIn(req, res, next) {
     // if they aren't redirect them to the home page
     res.redirect('/');
 }
+
+var crypto = require('crypto'),
+    shasum = function (data) {
+      return crypto.createHash('sha').update(data).digest('hex');
+    },
+    leString = "UmmaString",
+    leObject = { 'what' : 'object', 'who' : "yo' mama"};
