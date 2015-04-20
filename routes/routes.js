@@ -105,17 +105,26 @@ module.exports = function(app, passport) {
       mail.attachmentx = req.body['attachment-x'];
       mail.messageHeaders = req.body['message-headers'];
       mail.contentIdMap = req.body['content-id-map'];
-      // makes a new payment address
-//    mail.btcAddress = genAddress();
 
-      // save mail and setup a new wallet by the id
-      mail.save(btcAccount.createAddress({
+      // save mail
+      mail.save();
+
+      //TODO add btcAddress to Schema
+
+      // makes a new payment address
+      mail.btcAddress = btcAccount.createAddress({
         "callback_url": 'http://mailman.ninja/paid/' + mail.id,
         "label": mail.id
         }, function(err, address) {
-          if (err) {console.log(err);} else {console.log(address);}
-          // TODO send a reply mail containing the payment address
-      }));
+          if (err) {
+            console.log(err);
+            } else {
+              return address;
+            }
+      });
+
+
+
 
     });
 
