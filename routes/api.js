@@ -106,6 +106,18 @@ router.post('/payment/:mail_id', function(req, res) {
         success: false,
         message: 'Invalid token'
       });
+    } else if (decoded.mail_id !== req.params.mail_id) {
+
+      console.log('Possible attack!');
+      console.log('Token mismatch');
+      console.log('Mail ID : ' + mail_id);
+      console.log('Token ID : ' + decoded.mail_id);
+
+      return res.status(403).send({
+        success: false,
+        message: 'Token mismatch'
+      });
+
     } else if (decoded) {
       req.decoded = decoded;
       /* Example object to be recieved
@@ -127,16 +139,16 @@ router.post('/payment/:mail_id', function(req, res) {
           mail.callbackRes = req.body;
           mail.save();
 
-          // TODO determine what sort of mail this was
-
+          //determine what sort of mail this was
           if (mail.type === 'reward') {
 
             // mail the person saying there is a reward available
             mg.sendText('Mailman <mailman@mailman.ninja>', [mail.to],
               'RE: ' + mail.subject,
-              'Hi, there\'s a ' + req.body.amount +
+              'Hi, there\'s a ' + req.body.amount + ' BTC ' +
               'reward on replying to this email.\n ' +
-              'Just keep `mailman@mailman.ninja` in the CC field so that I know you\'ve replied!',
+              'Just keep `mailman@mailman.ninja` in the CC field so that I ' +
+              'know you\'ve replied!',
               'noreply@mailman.ninja', {},
               function(err) {
                 if (err) console.log('Unable to deliver invoice for mail ' +
