@@ -201,12 +201,18 @@ app.post('/user/auth', passport.authenticate('local-login', {
     failureFlash : true // allow flash messages
 }));
 
-// New user signup
+// User signup
 app.post('/user/new', passport.authenticate('local-signup', {
     successRedirect : '/profile', // redirect to the secure profile section
     failureRedirect : '/signup', // redirect back to the signup page if there is an error
     failureFlash : true // allow flash messages
 }));
+
+// User logout
+app.get('/user/lsogout', function(req, res) {
+    req.logout();
+    res.redirect('/');
+});
 
 
 
