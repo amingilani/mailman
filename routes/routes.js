@@ -1,20 +1,4 @@
-var express = require('express'),
-
-    // the Mail Model
-    Mail = require('../models/email.js'),
-
-    // Configuration
-    config = require('../config/config'),
-
-    // coinbase
-    Client = require('coinbase').Client,
-    client = new Client({
-      'apiKey'    : config.coinbase.testnet.key,
-      'apiSecret' : config.coinbase.testnet.secret,
-      'baseApiUri': 'https://api.sandbox.coinbase.com/v1/'
-    });
-    var Account   = require('coinbase').model.Account;
-    var btcAccount = new Account(client, {'id': '55335c04fb9854796c00000c'});
+var express = require('express');
 
 module.exports = function(app, passport) {
 
