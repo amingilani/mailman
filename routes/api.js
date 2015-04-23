@@ -23,10 +23,7 @@ var config = require('./config/config'),
 /* API ROUTES */
 
 // `/mailman`
-router.route('/mailman')
-
-
-.post(function(req, res) {
+router.post('/mailman', function(req, res) {
 
   // proceed if mailman was CCed into the mail.
   if (req.body.Cc.indexOf('mailman@mailman.ninja')) {
@@ -195,21 +192,21 @@ router.post('/mail/:user_id', function (req, res){
 });
 
 // User authorization (login)
-app.post('/user/auth', passport.authenticate('local-login', {
+router.post('/user/auth', passport.authenticate('local-login', {
     successRedirect : '/user', // redirect to the user
     failureRedirect : '/', // redirect back to the home page on error
     failureFlash : true // allow flash messages
 }));
 
 // User signup
-app.post('/user/new', passport.authenticate('local-signup', {
+router.post('/user/new', passport.authenticate('local-signup', {
     successRedirect : '/profile', // redirect to the secure profile section
     failureRedirect : '/signup', // redirect back to the signup page if there is an error
     failureFlash : true // allow flash messages
 }));
 
 // User logout
-app.get('/user/lsogout', function(req, res) {
+router.get('/user/lsogout', function(req, res) {
     req.logout();
     res.redirect('/');
 });
