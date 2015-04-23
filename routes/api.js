@@ -124,7 +124,7 @@ router.post('/payment/:mail_id', function(req, res) {
         'RE: ' + mail.subject,
         'Hi, there\'s a ' + req.body.amount +
         'reward on replying to this email.\n ' +
-        'Just keep `mailman@mailman.ninja` so that I may know you\'ve replied!',
+        'Just keep `mailman@mailman.ninja` in the CC field so that I know you\'ve replied!',
         'noreply@mailman.ninja', {},
         function(err) {
           if (err) console.log('Unable to deliver invoice for mail ' +
