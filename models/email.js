@@ -23,6 +23,6 @@ var emailSchema = mongoose.Schema ({
   messageHeaders      : 	String,
   contentIdMap        : 	String,
   btcAddress          :   String, // generated address for the email
-  callbackRes         :   Object // the callback when address is paid
+  transaction         :   Array // the transaction id's related to this email
 });
 module.exports = mongoose.model('Email', emailSchema);

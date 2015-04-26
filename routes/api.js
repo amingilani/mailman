@@ -6,8 +6,9 @@ var config = require('./config/config'),
   // Express
   express = require('express'),
   router = express.Router(),
-  // the Mail Model
-  Mail = require('../models/email.js'),
+  // Models
+  Mail = require('../models/email.js'), // Mail model
+  Transaction = require('../models/transaction.js'), // Transaction model
   // Coinbase
   Client = require('coinbase').Client,
   client = new Client({
@@ -100,6 +101,16 @@ router.post('/mailman', function(req, res) {
 // '/payment/:mail_id'
 router.post('/payment/:mail_id', function(req, res) {
 
+  /* Example object to be recieved
+
+    {
+    "address": "1AmB4bxKGvozGcZnSSVJoM6Q56EBhzMiQ5",
+    "amount": 1.23456,
+    "transaction": {
+      "hash": "7b95769dce68b9aa84e4aeda8d448e6cc17695a63cc2d361318eb0f6efdf8f82"
+    }
+  */
+
   jwt.verify(token, secret, function(err, decoded) {
     if (err) {
       return res.status(403).send({
@@ -120,15 +131,6 @@ router.post('/payment/:mail_id', function(req, res) {
 
     } else if (decoded) {
       req.decoded = decoded;
-      /* Example object to be recieved
-
-        {
-        "address": "1AmB4bxKGvozGcZnSSVJoM6Q56EBhzMiQ5",
-        "amount": 1.23456,
-        "transaction": {
-          "hash": "7b95769dce68b9aa84e4aeda8d448e6cc17695a63cc2d361318eb0f6efdf8f82"
-        }
-      */
 
       // find the mail with this id
       Mail.findById(req.params.mail_id, function(err, mail) {
@@ -136,8 +138,26 @@ router.post('/payment/:mail_id', function(req, res) {
           console.log(err);
         } else {
           // save the callback object in the db
-          mail.callbackRes = req.body;
-          mail.save();
+          // save the transaction
+          var transaction = new Transaction();
+          transaction.address = req.body.address;
+          transaction.amount = req.body.amount;
+          transaction.transaction.hash = req.transaction.hash;
+          transaction.save(
+            // append the transaction to the mail
+            Mail.findByIdAndUpdate(mail._id, {
+                $push: {
+                  'transaction': transaction
+                }
+              }, {
+                safe: true,
+                upsert: true
+              },
+              function(err, model) {
+                console.log(err);
+              }
+            )
+          );
 
           //determine what sort of mail this was
           if (mail.type === 'reward') {
@@ -151,13 +171,37 @@ router.post('/payment/:mail_id', function(req, res) {
               'know you\'ve replied!',
               'noreply@mailman.ninja', {},
               function(err) {
-                if (err) console.log('Unable to deliver invoice for mail ' +
-                  mail.id + '\nerror: ' + err);
-                else console.log('Success');
+                if (err) {
+                  console.log('Unable to deliver invoice for mail ' +
+                    mail.id + '\nerror: ' + err);
+                } else {
+                  console.log('Success');
+                }
               });
+            // if the mail is an incoming mail sent to a user
           } else if (mail.type === 'incoming') {
 
-            // TODO deliver the email to its rightful recepient
+            // TODO the code below has yet to be checked
+            // infact, i don't think i've added the relevent schema changes
+            User.findOne({
+              'local.username': mail.username
+            }, function(err, user) {
+
+              mg.sendText('Mailman <mailman@mailman.ninja>', [mail.to],
+                'RE: ' + mail.subject,
+                'Hi, there\'s a ' + req.body.amount + ' BTC ' +
+                'reward on replying to this email.\n ' +
+                'Just keep `mailman@mailman.ninja` in the CC field so that I ' +
+                'know you\'ve replied!',
+                'noreply@mailman.ninja', {},
+                function(err) {
+                  if (err) console.log('Unable to deliver invoice for mail ' +
+                    mail.id + '\nerror: ' + err);
+                  else console.log('Success');
+                });
+            });
+
+            // pay the recepient their share of the fee
           }
         }
       });
