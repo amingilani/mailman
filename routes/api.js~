@@ -124,7 +124,7 @@ router.post('/payment/:mail_id', function(req, res) {
         message: 'Invalid token'
       });
     } else if (decoded.mail_id !== req.params.mail_id) {
-    
+
       console.log('Possible attack!');
       console.log('Token mismatch');
       console.log('Mail ID : ' + mail_id);
