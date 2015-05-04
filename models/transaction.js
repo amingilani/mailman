@@ -1,15 +1,13 @@
 var mongoose = require('mongoose');
 
 
-var ledgerSchema = mongoose.Schema({
+var transactionSchema = mongoose.Schema({
   user_id: Number,
   mail_id: Number,
-  Credit: Boolean, 
+  credit: Boolean, 
   address: String,
   amount: Number,
-  transaction: {
-    hash: String
-  }
+  tx: String
 });
 
 module.exports = mongoose.model('Transaction', transactionSchema);
