@@ -36,8 +36,11 @@ router.post('/mailman', function(req, res) {
   // proceed if mailman was CCed into the mail.
   if (req.body.Cc.indexOf('mailman@mailman.ninja')) {
 
+    // regex expression to find "re:", "fw:" "fwd:", etc.
+    var junkRegex = /([\[\(] *)?(RE|FWD?) *([-:;)\]][ :;\])-]*|$)|\]+ *$/igm;
+
     Mail.findOne({
-      subjectStripped: req.body.subject.replace(/([\[\(] *)?(RE|FWD?) *([-:;)\]][ :;\])-]*|$)|\]+ *$/igm, "")
+      subjectStripped: req.body.subject.replace(junkRegex, "")
     }, function(err, mail) {
       if (err) {
         console.log(err);
@@ -52,7 +55,7 @@ router.post('/mailman', function(req, res) {
 
       } else if (!mail) {
         // if no such mail exists
-        console.log('Mailman was notified of a new NEW mail');  //debug
+        console.log('Mailman was notified of a new NEW mail'); //debug
 
         // save the metadata
         mail = new Mail();
@@ -64,8 +67,6 @@ router.post('/mailman', function(req, res) {
         mail.from = req.body.from;
         mail.subject = req.body.subject;
 
-        // regex expression to find "re:", "fw:" "fwd:", etc.
-        var junkRegex = /([\[\(] *)?(RE|FWD?) *([-:;)\]][ :;\])-]*|$)|\]+ *$/igm;
         // strip all re, and fwd from subject before saving as the stripped subject
         mail.subjectStripped = req.body.subject.replace(junkRegex, "");
 
@@ -80,10 +81,10 @@ router.post('/mailman', function(req, res) {
             mail.save();
           } else {
             // save the address and save the mail
-            console.log('Created address' + address.address);  //debug
+            console.log('Created address' + address.address); //debug
             mail.btcAddress = address.address;
             mail.save(
-            console.log('Saved mail');  //debug
+              console.log('New mail saved') //debug
             );
 
             // send an invoice to the sender
@@ -92,9 +93,12 @@ router.post('/mailman', function(req, res) {
               'Hi, pay the reward here: ' + mail.btcAddress,
               'noreply@mailman.ninja', {},
               function(err) {
-                if (err) console.log('Unable to deliver invoice for mail ' +
-                  mail.id + '\nerror: ' + err);
-                else console.log('Success');
+                if (err) {
+                  console.log('Unable to deliver invoice for mail ' +
+                    mail.id + '\nerror: ' + err);
+                } else {
+                  console.log('sent invoice for reward mail');
+                }
               });
           }
         });
@@ -116,7 +120,7 @@ router.post('/payment/:mail_id', function(req, res) {
       "hash": "7b95769dce68b9aa84e4aeda8d448e6cc17695a63cc2d361318eb0f6efdf8f82"
     }
   */
-
+  console.log('Recieved a new mail notification'); //debug
   jwt.verify(token, secret, function(err, decoded) {
     if (err) {
       return res.status(403).send({
@@ -124,9 +128,9 @@ router.post('/payment/:mail_id', function(req, res) {
         message: 'Invalid token'
       });
     } else if (decoded.mail_id !== req.params.mail_id) {
-    
-      console.log('Possible attack!');
+
       console.log('Token mismatch');
+      console.log('Possible attack!');
       console.log('Mail ID : ' + mail_id);
       console.log('Token ID : ' + decoded.mail_id);
 
