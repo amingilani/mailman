@@ -10,8 +10,6 @@ module.exports = function(app, passport) {
     });
 
     // =====================================
-<<<<<<< HEAD
-=======
     // LOGIN ===============================
     // =====================================
     // show the login form <-- not needed anymore since login on index
@@ -50,7 +48,6 @@ module.exports = function(app, passport) {
     }));
 
     // =====================================
->>>>>>> ui
     // PROFILE SECTION =====================
     // =====================================
     // we will want this protected so you have to be logged in to visit
