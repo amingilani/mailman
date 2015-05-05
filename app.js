@@ -64,8 +64,7 @@ app.use('/users', users);
 
 // the apiRouter
 var apiRouter = require('./routes/api.js');
-app.use('/api', apiRouter);
-
+apiRouter(app, passport);
 
 /* ERROR HANDLING. MUST FIX ASAP
 // catch 404 and forward to error handler
