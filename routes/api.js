@@ -33,7 +33,7 @@ module.exports = function(app, passport) {
 /* API ROUTES */
 
 // `/mailman`
-app.post('/mailman', function(req, res) {
+app.post('/api/mailman', function(req, res) {
 
 
   // proceed if mailman was CCed into the mail.
@@ -75,7 +75,7 @@ app.post('/mailman', function(req, res) {
 
         //create the address
         btcAccount.createAddress({
-          "callback_url": 'http://mailman.ninja/api/payment/' + mail.id,
+          "callback_url": 'http://the.mailman.ninja/api/payment/' + mail.id,
           "label": ""
         }, function(err, address) {
           if (err) {
@@ -112,7 +112,7 @@ app.post('/mailman', function(req, res) {
 
 // When a callback is recieved for a payment made.
 // '/payment/:mail_id'
-app.post('/payment/:mail_id', function(req, res) {
+app.post('/api/payment/:mail_id', function(req, res) {
 
   /* Example object to be recieved
 
@@ -123,7 +123,7 @@ app.post('/payment/:mail_id', function(req, res) {
       "hash": "7b95769dce68b9aa84e4aeda8d448e6cc17695a63cc2d361318eb0f6efdf8f82"
     }
   */
-  console.log('Recieved a new mail notification'); //debug
+  console.log('Recieved a payment notification'); //debug
   jwt.verify(token, secret, function(err, decoded) {
     if (err) {
       return res.status(403).send({
@@ -223,7 +223,7 @@ app.post('/payment/:mail_id', function(req, res) {
 });
 
 // new mail to specifc user
-app.post('/mail/:user_id', function(req, res) {
+app.post('/api/mail/:user_id', function(req, res) {
   console.log(req.body.lol);
   res.send(req.body['lol-hello']);
 
@@ -253,7 +253,7 @@ app.post('/mail/:user_id', function(req, res) {
   }, secret);
 
   var addressArgs = {
-    'callback_url': 'http://mailman.ninja/api/payment/' + mail.id +
+    'callback_url': 'http://the.mailman.ninja/api/payment/' + mail.id +
       '?token=' + callbackToken,
     'label': mail.id
   };
@@ -285,21 +285,21 @@ app.post('/mail/:user_id', function(req, res) {
 });
 
 // User authorization (login)
-app.post('/user/auth', passport.authenticate('local-login', {
+app.post('/api/user/auth', passport.authenticate('local-login', {
   successRedirect: '/user', // redirect to the user
   failureRedirect: '/', // redirect back to the home page on error
   failureFlash: true // allow flash messages
 }));
 
 // User signup
-app.post('/user/new', passport.authenticate('local-signup', {
+app.post('/api/user/new', passport.authenticate('local-signup', {
   successRedirect: '/profile', // redirect to the secure profile section
   failureRedirect: '/signup', // redirect back to the signup page if there is an error
   failureFlash: true // allow flash messages
 }));
 
 // User logout
-app.get('/user/logout', function(req, res) {
+app.get('/api/user/logout', function(req, res) {
   req.logout();
   res.redirect('/');
 });
