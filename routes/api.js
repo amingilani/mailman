@@ -43,7 +43,7 @@ module.exports = function(app, passport) {
     console.log(req.body);
 
     // proceed if mailman was CCed into the mail.
-    if (req.body.Cc.indexOf('mailman@mailman.ninja')) {
+    if (req.body.Cc && req.body.Cc.indexOf('mailman@mailman.ninja')) {
 
       // regex expression to find "re:", "fw:" "fwd:", etc.
       var junkRegex = /([\[\(] *)?(RE|FWD?) *([-:;)\]][ :;\])-]*|$)|\]+ *$/igm;
@@ -113,6 +113,8 @@ module.exports = function(app, passport) {
           });
         }
       });
+    } else {
+      console.log('mailman was not in the CC field');
     }
   });
 
