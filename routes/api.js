@@ -32,6 +32,11 @@ module.exports = function(app, passport) {
 
 /* API ROUTES */
 
+//welcome to the api
+app.get('/api', function(req, res) {
+  res.send('Welcome to the API');
+});
+
 // `/mailman`
 app.post('/api/mailman', function(req, res) {
 
