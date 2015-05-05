@@ -1,7 +1,7 @@
 /* REQUIREMENTS */
 //////////////////
 // Config
-var config = require('./config/config'),
+var config = require('../config/config.js'),
   secret = config.secret,
   // Express
   express = require('express'),
@@ -27,10 +27,13 @@ var config = require('./config/config'),
   // JSON Web Tokens
   jwt = require('jsonwebtoken');
 
+
+module.exports = function(app, passport) {
+
 /* API ROUTES */
 
 // `/mailman`
-router.post('/mailman', function(req, res) {
+app.post('/mailman', function(req, res) {
 
 
   // proceed if mailman was CCed into the mail.
@@ -109,7 +112,7 @@ router.post('/mailman', function(req, res) {
 
 // When a callback is recieved for a payment made.
 // '/payment/:mail_id'
-router.post('/payment/:mail_id', function(req, res) {
+app.post('/payment/:mail_id', function(req, res) {
 
   /* Example object to be recieved
 
@@ -220,7 +223,7 @@ router.post('/payment/:mail_id', function(req, res) {
 });
 
 // new mail to specifc user
-router.post('/mail/:user_id', function(req, res) {
+app.post('/mail/:user_id', function(req, res) {
   console.log(req.body.lol);
   res.send(req.body['lol-hello']);
 
@@ -282,25 +285,23 @@ router.post('/mail/:user_id', function(req, res) {
 });
 
 // User authorization (login)
-router.post('/user/auth', passport.authenticate('local-login', {
+app.post('/user/auth', passport.authenticate('local-login', {
   successRedirect: '/user', // redirect to the user
   failureRedirect: '/', // redirect back to the home page on error
   failureFlash: true // allow flash messages
 }));
 
 // User signup
-router.post('/user/new', passport.authenticate('local-signup', {
+app.post('/user/new', passport.authenticate('local-signup', {
   successRedirect: '/profile', // redirect to the secure profile section
   failureRedirect: '/signup', // redirect back to the signup page if there is an error
   failureFlash: true // allow flash messages
 }));
 
 // User logout
-router.get('/user/logout', function(req, res) {
+app.get('/user/logout', function(req, res) {
   req.logout();
   res.redirect('/');
 });
 
-
-
-module.exports = router;
+};
