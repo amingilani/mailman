@@ -48,7 +48,7 @@ app.use(flash()); // use connect-flash for flash messages stored in session
 //app.use(favicon(__dirname + '/public/favicon.ico'));
 app.use(logger('dev'));
 app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -63,8 +63,7 @@ app.use('/users', users);
 */
 
 // the apiRouter
-var apiRouter = require('./routes/api.js');
-apiRouter(app, passport);
+require('./routes/api.js')(app, passport);
 
 /* ERROR HANDLING. MUST FIX ASAP
 // catch 404 and forward to error handler
