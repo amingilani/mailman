@@ -56,10 +56,16 @@ app.use(express.static(path.join(__dirname, 'public')));
 // ======
 // load our routes and pass in our app and fully configured passport
 require('./routes/routes.js')(app, passport);
+
 /*
 app.use('/', index);
 app.use('/users', users);
 */
+
+// the apiRouter
+var apiRouter = require('./routes/api.js');
+app.use('/api', apiRouter);
+
 
 /* ERROR HANDLING. MUST FIX ASAP
 // catch 404 and forward to error handler
