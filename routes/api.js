@@ -199,7 +199,7 @@ module.exports = function(app, passport) {
             var transaction = new Transaction();
             transaction.address = req.body.address;
             transaction.amount = req.body.amount;
-            transaction.transaction.hash = req.body.transaction.hash;
+            transaction.tx = req.body.transaction.hash;
             transaction.save(
               // append the transaction to the mail
               Mail.findByIdAndUpdate(mail._id, {
