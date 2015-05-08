@@ -50,7 +50,7 @@ module.exports = function(app, passport) {
 
     var mailmanAddress = /\bmailman@mailman\.ninja\b/i; // mailman's email address in regex
 
-    if ( mailman.Address.test(req.body.Cc)) {
+    if ( mailmanAddress.test(req.body.Cc)) {
       // proceed if mailman was CCed into the mail.
 
       console.log('Mailman was addressed in the CC field'); //debug
