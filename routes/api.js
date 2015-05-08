@@ -39,21 +39,26 @@ module.exports = function(app, passport) {
 
   // `/mailman`
   app.post('/api/mailman', function(req, res) {
-    console.log('mailman recieved an email');
-    console.log('The CC field said: "' + req.body.CC + '"');
-    console.log('');
-    console.log('It contained the following object');
-    console.log(req.body);
+    console.log('mailman the following email'); //debug
+    console.log(req.body); //debug
 
+    var mailmanAddress = /\bmailman@mailman\.ninja\b/i; // mailman's email address in regex
 
-    // proceed if mailman was CCed into the mail.
-    if (req.body.Cc && req.body.Cc.indexOf('mailman@mailman.ninja')) {
+    if ( mailman.Address.test(req.body.Cc)) {
+      // proceed if mailman was CCed into the mail.
 
-      // regex expression to find "re:", "fw:" "fwd:", etc.
+      console.log('Mailman was addressed in the CC field'); //debug
+
+      console.log('the original subject was ' + req.body.subject); //debug
+
+      // Regex expression to for "re:", "fw:" "fwd:", etc.
       var junkRegex = /([\[\(] *)?(RE|FWD?) *([-:;)\]][ :;\])-]*|$)|\]+ *$/igm;
+      var subjectStripped = req.body.subject.replace(junkRegex, "");
+
+      console.log('Mailman stripped the subject to ' + subjectStripped); //debug
 
       Mail.findOne({
-        subjectStripped: req.body.subject.replace(junkRegex, "")
+        'subjectStripped' : subjectStripped
       }, function(err, mail) {
         if (err) {
           console.log(err);
@@ -68,7 +73,7 @@ module.exports = function(app, passport) {
 
         } else if (!mail) {
           // if no such mail exists
-          console.log('Mailman was notified of a new NEW mail'); //debug
+          console.log('Mailman classified it as a new email'); //debug
 
           // save the metadata
           mail = new Mail();
