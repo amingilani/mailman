@@ -152,8 +152,9 @@ module.exports = function(app, passport) {
         "hash": "7b95769dce68b9aa84e4aeda8d448e6cc17695a63cc2d361318eb0f6efdf8f82"
       }
     */
-    console.log('Recieved a payment notification with the following token'); //debug
-    console.log(req.param.token);
+    console.log('Recieved a payment notification with the following req'); //debug
+    console.log(req.param);
+    console.log(req.body);
 
     jwt.verify(req.param.token, secret, function(err, decoded) {
       if (err) {
