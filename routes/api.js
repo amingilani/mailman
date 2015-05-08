@@ -104,7 +104,7 @@ module.exports = function(app, passport) {
               newUser.local.email = mail.to;
               newUser.save(
                 console.log('Saving new user ' + newUser.id +
-                  ' for email address' + newUser.email)
+                  ' for email address' + newUser.local.email)
               );
             }
           });
