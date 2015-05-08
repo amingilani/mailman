@@ -45,7 +45,7 @@ module.exports = function(app, passport) {
       message : 'recieved an object'
     });
 
-    console.log('mailman the following email'); //debug
+    console.log('mailman recieved the following email'); //debug
     console.log(req.body); //debug
 
     var mailmanAddress = /\bmailman@mailman\.ninja\b/i; // mailman's email address in regex
@@ -153,7 +153,7 @@ module.exports = function(app, passport) {
       }
     */
     console.log('Recieved a payment notification'); //debug
-    jwt.verify(token, secret, function(err, decoded) {
+    jwt.verify(req.params.token, secret, function(err, decoded) {
       if (err) {
 
         console.log('the token was invalid'); //debug
