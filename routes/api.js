@@ -95,8 +95,14 @@ module.exports = function(app, passport) {
           mail.subjectStripped = req.body.subject.replace(junkRegex, "");
 
           //create the address
+
+          var callbackToken = jwt.sign({
+            'mail_id': mail.id,
+          }, secret);
+
           btcAccount.createAddress({
-            "callback_url": 'http://the.mailman.ninja/api/payment/' + mail.id,
+            "callback_url": 'http://the.mailman.ninja/api/payment/' +
+            mail.id + '?token=' + callbackToken,
             "label": ""
           }, function(err, address) {
             if (err) {
