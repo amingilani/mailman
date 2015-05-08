@@ -197,6 +197,8 @@ module.exports = function(app, passport) {
             // save the callback object in the db
             // save the transaction
             var transaction = new Transaction();
+            transaction.credit = true;
+            transaction.mail_id = mail.id;
             transaction.address = req.body.address;
             transaction.amount = req.body.amount;
             transaction.tx = req.body.transaction.hash;
