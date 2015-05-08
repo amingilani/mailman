@@ -153,7 +153,7 @@ module.exports = function(app, passport) {
       }
     */
     console.log('Recieved a payment notification'); //debug
-    jwt.verify(req.params.token, secret, function(err, decoded) {
+    jwt.verify(req.param.token, secret, function(err, decoded) {
       if (err) {
         console.log(err);
         console.log('the token was invalid'); //debug
