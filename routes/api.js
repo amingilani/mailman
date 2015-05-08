@@ -45,7 +45,7 @@ module.exports = function(app, passport) {
       message : 'recieved an object'
     });
 
-    console.log('mailman recieved a NEW email'); //debug
+    console.log('mailman recieved an email'); //debug
 
     var mailmanAddress = /\bmailman@mailman\.ninja\b/i; // mailman's email address in regex
 
