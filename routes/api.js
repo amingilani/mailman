@@ -40,8 +40,11 @@ module.exports = function(app, passport) {
   // `/mailman`
   app.post('/api/mailman', function(req, res) {
     console.log('mailman recieved an email');
-    console.log('It contained the following');
-    console.log('The CC field said: ' + req.body.CC);
+    console.log('The CC field said: "' + req.body.CC + '"');
+    console.log('');
+    console.log('It contained the following object');
+    console.log(req.body);
+
 
     // proceed if mailman was CCed into the mail.
     if (req.body.Cc && req.body.Cc.indexOf('mailman@mailman.ninja')) {
