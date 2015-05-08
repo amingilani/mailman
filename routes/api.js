@@ -8,6 +8,7 @@ var config = require('../config/config.js'),
   router = express.Router(),
   // Models
   Mail = require('../models/email.js'), // Mail model
+  User = require('../models/user.js'), // Mail model
   Transaction = require('../models/transaction.js'), // Transaction model
   // Coinbase
   Client = require('coinbase').Client,
@@ -245,7 +246,7 @@ module.exports = function(app, passport) {
                 // append the transaction to the mail
                 Mail.findByIdAndUpdate(mail._id, {
                     $push: {
-                      'transaction': transaction
+                      'transaction': transaction.id
                     }
                   }, {
                     safe: true,
