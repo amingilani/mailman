@@ -149,18 +149,20 @@ module.exports = function(app, passport) {
     console.log('Recieved a payment notification'); //debug
     jwt.verify(token, secret, function(err, decoded) {
       if (err) {
-        return res.status(403).send({
+
+        console.log('the token was invalid'); //debug
+
+        return res.status(403).json({
           success: false,
           message: 'Invalid token'
         });
       } else if (decoded.mail_id !== req.params.mail_id) {
 
         console.log('Token mismatch');
-        console.log('Possible attack!');
         console.log('Mail ID : ' + mail_id);
         console.log('Token ID : ' + decoded.mail_id);
 
-        return res.status(403).send({
+        return res.status(403).json({
           success: false,
           message: 'Token mismatch'
         });
@@ -168,11 +170,21 @@ module.exports = function(app, passport) {
       } else if (decoded) {
         req.decoded = decoded;
 
+        console.log('Token was valid');
+
+        res.status(200).json({
+          success: true,
+          message: 'Payment acknowledged'
+        });
+
         // find the mail with this id
         Mail.findById(req.params.mail_id, function(err, mail) {
           if (err) {
             console.log(err);
           } else {
+
+            console.log('found mail: ' + mail.id); //debug
+
             // save the callback object in the db
             // save the transaction
             var transaction = new Transaction();
