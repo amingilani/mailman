@@ -55,13 +55,14 @@ module.exports = function(app, passport) {
 
       console.log('Mailman was addressed in the CC field'); //debug
 
-      console.log('the original subject was ' + req.body.subject); //debug
+
 
       // Regex expression to for "re:", "fw:" "fwd:", etc.
       var junkRegex = /([\[\(] *)?(RE|FWD?) *([-:;)\]][ :;\])-]*|$)|\]+ *$/igm;
       var subjectStripped = req.body.subject.replace(junkRegex, "");
 
-      console.log('Mailman stripped the subject to ' + subjectStripped); //debug
+      console.log('the original subject was "' + req.body.subject + '"' +
+      ' but Mailman stripped it to "' + subjectStripped+ '"' ); //debug
 
       Mail.findOne({
         'subjectStripped': subjectStripped
@@ -94,13 +95,13 @@ module.exports = function(app, passport) {
 
           // check if the sender and reciever have accounts
           User.find({
-            email: mail.to
+            local.email: mail.to
           }, function(err, user) {
             if (!err) {
               console.log(err);
             } else if (!user) {
               var newUser = new User();
-              newUser.email = mail.to;
+              newUser.local.email = mail.to;
               newUser.save(
                 console.log('Saving new user ' + newUser.id +
                   ' for email address' + newUser.email)
@@ -109,13 +110,13 @@ module.exports = function(app, passport) {
           });
 
           User.find({
-            email: mail.from
+            local.email: mail.from
           }, function(err, user) {
             if (!err) {
               console.log(err);
             } else if (!user) {
               var newUser = new User();
-              newUser.email = mail.from;
+              newUser.local.email = mail.from;
               newUser.save(
                 console.log('Saving new user ' + newUser.id +
                   ' for email address' + newUser.email)
