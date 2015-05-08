@@ -67,8 +67,8 @@ module.exports = function(app, passport) {
       }, function(err, mail) {
         if (err) {
           console.log(err);
-        } else if (mail && (mail.to === req.body.from &&
-            mail.from === req.body.to)) {
+        } else if (mail && (mail.to === req.body.From &&
+            mail.from === req.body.To)) {
           // if the mail exists and is being sent back from the original sender
           console.log('Recieved confirmation of a reply from original sender for mail:' + mail.id); //debug
 
@@ -87,7 +87,7 @@ module.exports = function(app, passport) {
           mail.recipient = req.body.recipient;
           mail.date = req.body.Date;
           mail.cc = req.body.Cc;
-        mail.sender = req.body.sender;
+          mail.sender = req.body.sender;
           mail.from = req.body.from;
           mail.subject = req.body.subject;
 
@@ -255,7 +255,7 @@ module.exports = function(app, passport) {
                   function(err) {
                     if (err) console.log('Unable to deliver invoice for mail ' +
                       mail.id + '\nerror: ' + err);
-                    else console.log('Success');
+                    else console.log('Successfully sent reward notification');
                   });
               });
 
