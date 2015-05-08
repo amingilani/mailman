@@ -218,9 +218,10 @@ module.exports = function(app, passport) {
 
             //determine what sort of mail this was
             if (mail.type === 'reward') {
-
+              var originalRecipient = mail.to;
+              console.log("sending mail reward notification to " + originalRecipient);
               // mail the person saying there is a reward available
-              mg.sendText('Mailman <mailman@mailman.ninja>', [mail.to],
+              mg.sendText('Mailman <mailman@mailman.ninja>', [originalRecipient],
                 'RE: ' + mail.subject,
                 'Hi, there\'s a ' + req.body.amount + ' BTC ' +
                 'reward on replying to this email.\n ' +
@@ -229,8 +230,8 @@ module.exports = function(app, passport) {
                 'noreply@mailman.ninja', {},
                 function(err) {
                   if (err) {
-                    console.log('Unable to deliver invoice for mail ' +
-                      mail.id + '\nerror: ' + err);
+                    console.log(err + '\n' +
+                      'Could not send reward notifcation for mail' + mail.id );
                   } else {
                     console.log('Success');
                   }
