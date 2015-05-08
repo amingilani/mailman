@@ -41,15 +41,15 @@ module.exports = function(app, passport) {
   app.post('/api/mailman', function(req, res) {
 
     res.json({
-      success : true,
-      message : 'recieved an object'
+      success: true,
+      message: 'recieved an object'
     });
 
     console.log('mailman recieved an email'); //debug
 
     var mailmanAddress = /\bmailman@mailman\.ninja\b/i; // mailman's email address in regex
 
-    if ( mailmanAddress.test(req.body.Cc)) {
+    if (mailmanAddress.test(req.body.Cc)) {
       // proceed if mailman was CCed into the mail.
 
       console.log('Mailman was addressed in the CC field'); //debug
@@ -63,7 +63,7 @@ module.exports = function(app, passport) {
       console.log('Mailman stripped the subject to ' + subjectStripped); //debug
 
       Mail.findOne({
-        'subjectStripped' : subjectStripped
+        'subjectStripped': subjectStripped
       }, function(err, mail) {
         if (err) {
           console.log(err);
@@ -91,6 +91,38 @@ module.exports = function(app, passport) {
           mail.from = req.body.from;
           mail.subject = req.body.subject;
 
+          // check if the sender and reciever have accounts
+          User.find({
+            email: mail.to
+          }, function(err, user) {
+            if (!err) {
+              console.log(err);
+            } else if (!user) {
+              var newUser = new User();
+              newUser.email = mail.to;
+              newUser.save(
+                console.log('Saving new user ' + newUser.id +
+                  ' for email address' + newUser.email)
+              );
+            }
+          });
+
+          User.find({
+            email: mail.from
+          }, function(err, user) {
+            if (!err) {
+              console.log(err);
+            } else if (!user) {
+              var newUser = new User();
+              newUser.email = mail.from;
+              newUser.save(
+                console.log('Saving new user ' + newUser.id +
+                  ' for email address' + newUser.email)
+              );
+            }
+          });
+
+
           // strip all re, and fwd from subject before saving as the stripped subject
           mail.subjectStripped = req.body.subject.replace(junkRegex, "");
 
@@ -102,35 +134,38 @@ module.exports = function(app, passport) {
 
           btcAccount.createAddress({
             "callback_url": 'http://the.mailman.ninja/api/payment/' +
-            mail.id + '?token=' + callbackToken,
+              mail.id + '?token=' + callbackToken,
             "label": ""
           }, function(err, address) {
             if (err) {
               // output error and save mail
               console.log(err);
-              mail.save();
+              mail.save(
+                console.log("Couldn't create address, but saved mail")
+              );
             } else {
               // save the address and save the mail
               console.log('Created address ' + address.address); //debug
               mail.btcAddress = address.address;
               mail.save(
-                console.log('New mail saved') //debug
+                // send an invoice to the sender
+                mg.sendText('Mailman <mailman@mailman.ninja>', [mail.sender],
+                  'RE: ' + mail.subject,
+                  'Hi, pay the reward here: ' + mail.btcAddress,
+                  'noreply@mailman.ninja', {},
+                  function(err) {
+                    if (err) {
+                      console.log('Saved mail ' + mail.id +
+                        ' but unable to deliver invoice for mail ' +
+                        mail.id + '\nerror: ' + err);
+                    } else {
+                      console.log('Saved mail ' + mail.id +
+                        ' and sent invoice for reward mail');
+                    }
+                  })
               );
-
-              // send an invoice to the sender
-              mg.sendText('Mailman <mailman@mailman.ninja>', [mail.sender],
-                'RE: ' + mail.subject,
-                'Hi, pay the reward here: ' + mail.btcAddress,
-                'noreply@mailman.ninja', {},
-                function(err) {
-                  if (err) {
-                    console.log('Unable to deliver invoice for mail ' +
-                      mail.id + '\nerror: ' + err);
-                  } else {
-                    console.log('sent invoice for reward mail');
-                  }
-                });
             }
+
           });
         }
       });
@@ -153,7 +188,7 @@ module.exports = function(app, passport) {
       }
     */
     console.log('Recieved a payment notification with the following token\n' +
-    req.query.token); //debug
+      req.query.token); //debug
 
 
     jwt.verify(req.query.token, secret, function(err, decoded) {
@@ -198,30 +233,36 @@ module.exports = function(app, passport) {
             // save the transaction
             var transaction = new Transaction();
             transaction.credit = true;
-            transaction.mail_id = mail.id;
+            transaction.refMailId = mail.id;
             transaction.address = req.body.address;
             transaction.amount = req.body.amount;
             transaction.tx = req.body.transaction.hash;
-            transaction.save(
-              // append the transaction to the mail
-              Mail.findByIdAndUpdate(mail._id, {
-                  $push: {
-                    'transaction': transaction
+            User.find({
+              email: user.email
+            }, function(err, user) {
+              transaction.refAccountId = user.id;
+              transaction.save(
+                // append the transaction to the mail
+                Mail.findByIdAndUpdate(mail._id, {
+                    $push: {
+                      'transaction': transaction
+                    }
+                  }, {
+                    safe: true,
+                    upsert: true
+                  },
+                  function(err, model) {
+                    console.log(err);
                   }
-                }, {
-                  safe: true,
-                  upsert: true
-                },
-                function(err, model) {
-                  console.log(err);
-                }
-              )
-            );
+                )
+              );
+            });
 
             //determine what sort of mail this was
             if (mail.type === 'reward') {
               var originalRecipient = mail.to;
-              console.log("sending mail reward notification to " + originalRecipient);
+              console.log("sending mail reward notification to " +
+                originalRecipient);
               // mail the person saying there is a reward available
               mg.sendText('Mailman <mailman@mailman.ninja>', [originalRecipient],
                 'RE: ' + mail.subject,
@@ -233,7 +274,7 @@ module.exports = function(app, passport) {
                 function(err) {
                   if (err) {
                     console.log(err + '\n' +
-                      'Could not send reward notifcation for mail' + mail.id );
+                      'Could not send reward notifcation for mail' + mail.id);
                   } else {
                     console.log('Success');
                   }
@@ -251,8 +292,8 @@ module.exports = function(app, passport) {
                   'RE: ' + mail.subject,
                   'Hi, there\'s a ' + req.body.amount + ' BTC ' +
                   'reward on replying to this email.\n ' +
-                  'Just keep `mailman@mailman.ninja` in the CC field so that I ' +
-                  'know you\'ve replied!',
+                  'Just keep `mailman@mailman.ninja` in the CC field so ' +
+                  'that I know you\'ve replied!',
                   'noreply@mailman.ninja', {},
                   function(err) {
                     if (err) console.log('Unable to deliver invoice for mail ' +
