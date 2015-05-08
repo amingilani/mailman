@@ -84,10 +84,10 @@ module.exports = function(app, passport) {
           // save the metadata
           mail = new Mail();
           mail.type = "reward";
-          mail.to = req.body.to;
+          mail.recipient = req.body.recipient;
           mail.date = req.body.Date;
           mail.cc = req.body.Cc;
-          mail.sender = req.body.sender;
+        mail.sender = req.body.sender;
           mail.from = req.body.from;
           mail.subject = req.body.subject;
 
@@ -152,8 +152,8 @@ module.exports = function(app, passport) {
         "hash": "7b95769dce68b9aa84e4aeda8d448e6cc17695a63cc2d361318eb0f6efdf8f82"
       }
     */
-    console.log('Recieved a payment notification with the following token'); //debug
-    console.log(req.query.token); //debug
+    console.log('Recieved a payment notification with the following token\n' +
+    req.query.token); //debug
 
 
     jwt.verify(req.query.token, secret, function(err, decoded) {

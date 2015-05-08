@@ -5,10 +5,9 @@ var bcrypt   = require('bcrypt-nodejs');
 var emailSchema = mongoose.Schema ({
   type                :   String, // "reward" for cced mails or "incoming"
   incomingEmail       :   String, // user_id where user_id@mailman.ninja
-  to                  :   String,
+  recipient           :   String,
   date                :   Date,
   cc                  :   String,
-  recipient           : 	String,
   sender              : 	String,
   from                : 	String,
   subject             : 	String,
