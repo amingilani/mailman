@@ -45,8 +45,7 @@ module.exports = function(app, passport) {
       message : 'recieved an object'
     });
 
-    console.log('mailman recieved the following email'); //debug
-    console.log(req.body); //debug
+    console.log('mailman a NEW email'); //debug
 
     var mailmanAddress = /\bmailman@mailman\.ninja\b/i; // mailman's email address in regex
 
@@ -111,7 +110,7 @@ module.exports = function(app, passport) {
               mail.save();
             } else {
               // save the address and save the mail
-              console.log('Created address' + address.address); //debug
+              console.log('Created address ' + address.address); //debug
               mail.btcAddress = address.address;
               mail.save(
                 console.log('New mail saved') //debug
@@ -218,7 +217,7 @@ module.exports = function(app, passport) {
 
             //determine what sort of mail this was
             if (mail.type === 'reward') {
-              var originalRecipient = mail.to;
+              var originalRecipient = mail.recipient;
               console.log("sending mail reward notification to " + originalRecipient);
               // mail the person saying there is a reward available
               mg.sendText('Mailman <mailman@mailman.ninja>', [originalRecipient],
