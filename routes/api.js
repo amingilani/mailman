@@ -39,6 +39,12 @@ module.exports = function(app, passport) {
 
   // `/mailman`
   app.post('/api/mailman', function(req, res) {
+
+    res.json({
+      success : true,
+      message : 'recieved an object'
+    });
+
     console.log('mailman the following email'); //debug
     console.log(req.body); //debug
 
