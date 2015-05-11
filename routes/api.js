@@ -26,7 +26,15 @@ var config = require('../config/config.js'),
   mg = new Mailgun(config.mailgun),
 
   // JSON Web Tokens
-  jwt = require('jsonwebtoken');
+  jwt = require('jsonwebtoken'),
+
+  // async
+  async = require('async'),
+
+  // Deposit Account
+  depositAccount = 1337387, //that's 1337DEP
+  withdrawalAccount = 1337948, //that's 1337WIT
+  mailmanAccount = 13372665; //that's 1337COOL
 
 
 module.exports = function(app, passport) {
@@ -62,7 +70,7 @@ module.exports = function(app, passport) {
       var subjectStripped = req.body.subject.replace(junkRegex, "");
 
       console.log('the original subject was "' + req.body.subject + '"' +
-      ' but Mailman stripped it to "' + subjectStripped+ '"' ); //debug
+        ' but Mailman stripped it to "' + subjectStripped + '"'); //debug
 
       Mail.findOne({
         'subjectStripped': subjectStripped
@@ -95,7 +103,7 @@ module.exports = function(app, passport) {
 
           // check if the sender and reciever have accounts
           User.find({
-            'local.email' : mail.to
+            'local.email': mail.to
           }, function(err, user) {
             if (!err) {
               console.log(err);
@@ -231,34 +239,46 @@ module.exports = function(app, passport) {
 
             console.log('found mail: ' + mail.id); //debug
 
-            // save the callback object in the db
-            // save the transaction
-            var transaction = new Transaction();
-            transaction.credit = true;
-            transaction.refMailId = mail.id;
-            transaction.address = req.body.address;
-            transaction.amount = req.body.amount;
-            transaction.tx = req.body.transaction.hash;
+            //find the User
             User.find({
               email: user.email
             }, function(err, user) {
-              transaction.refAccountId = user.id;
-              transaction.save(
-                // append the transaction to the mail
-                Mail.findByIdAndUpdate(mail._id, {
-                    $push: {
-                      'transaction': transaction.id
+
+                // deposit the amount in the User's account
+                var depositTransaction ={
+                  "from" : depositAccount,
+                  "to" : user.id,
+                  "amount" : req.body.amount,
+                  "address": req.body.address,
+                  "tx" : req.body.transaction.hash
+                };
+
+                transferBalance(depositTransaction, function(err, transaction){if (err){console.log(err);} else {
+                  // append the transaction.id to the mail
+                  Mail.findByIdAndUpdate(mail._id, {
+                      $push: {
+                        'transaction': transaction.id
+                      }
+                    }, {
+                      safe: true,
+                      upsert: true
+                    },
+                    function(err, model) {
+                      console.log(err);
                     }
-                  }, {
-                    safe: true,
-                    upsert: true
-                  },
-                  function(err, model) {
-                    console.log(err);
-                  }
-                )
-              );
-            });
+                  );
+                }});
+
+                var mailmanTransaction ={
+                  "from" : user.id,
+                  "to" : mailmanAccount,
+                  "amount" : req.body.amount
+                };
+
+                // transfer deposit to Mailman
+                transferBalance(depositTransaction, function(err, transaction){if (err){console.log(err);}});
+              });
+
 
             //determine what sort of mail this was
             if (mail.type === 'reward') {
@@ -395,3 +415,81 @@ module.exports = function(app, passport) {
   });
 
 };
+
+var dummyTx = mongoose.model('dummyTx', dummyschema);
+
+function transferBalance(transactionObject, callback) {
+/*
+// dummy transactionObject
+  demTrans = {
+    "from" : 1,
+    "to" : 2,
+    "amount" : 2,
+    "address": "thisIsNotAValidAddress",
+    "tx" : "thisIsNotAValidTx"
+  };
+
+*/
+
+  // because i'm too lazy to change the names everywhere
+  var from = transactionObject.from;
+  var to = transactionObject.to;
+
+  userBalance(from);
+  userBalance(to);
+
+
+  transaction = new Transaction();
+  if (transactionObject.address) {
+    transaction.address = transactionObject.address;
+  }
+  if (transactionObject.tx) {
+    transaction.tx = transactionObject.tx;
+  }
+  transaction.debitAccount = transactionObject.from; // with reference to the reciever
+  transaction.creditAccount = transactionObject.to; // in the account of the sender
+  transaction.amount = transactionObject.amount; // of the given amount
+  transaction.save(function(err, transaction) {
+    console.log("Credited User " + transaction.creditAccount +
+      " and debited User " + transaction.debitAccount + " by amount " +
+      transaction.amount + " BTC");
+    userBalance(transaction.creditAccount);
+    userBalance(transaction.debitAccount);
+    if (callback) {
+      callback(err, transaction);
+    }
+  });
+}
+
+
+function userBalance(user) {
+  Transaction.aggregate()
+    .match({
+      "$or": [{
+        "debitAccount": user
+      }, {
+        "creditAccount": user
+      }]
+    })
+    .project({
+      "balance": {
+        "$cond": [{
+            "$eq": ["$debitAccount", user]
+          }, {
+            "$multiply": [-1, "$amount"]
+          },
+          "$amount"
+        ]
+      },
+      "account": user
+    })
+    .group({
+      "_id": "$creditAccount",
+      "total": {
+        "$sum": "$balance"
+      }
+    })
+    .exec(function(err, object) {
+      console.log("User " + user + " has balance " + object[0].total);
+    });
+}
