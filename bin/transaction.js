@@ -18,7 +18,7 @@ ledger.methods.record = function(credit, user_id, mail_id, txCallback) {
 
 };
 
-ledger.methods.getBalance = function(user_id, callback {
+ledger.methods.getBalance = function(user_id, callback) {
   Transaction.aggregate()
         .match({"account": user_id})
         .project({ "balance": { "$cond": [
@@ -54,7 +54,7 @@ ledger.methods.transferFunds = function(from, to, amount) {
         transactionCredit.account = transactionDebit.refAccount; // the reciever
         transactionCredit.refAccount = transactionDebit.account; // the sender
         transactionCredit.credit = true; // add a credit transaction
-        transactionCredit.amount = amount; // of the same amount
+        transactionCredit.amount = trasnactionDebit.amount; // of the same amount
         transactionCredit.save(function(err, transactionCredit) {
           if (err) {
             console.log(err);
