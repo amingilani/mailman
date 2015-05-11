@@ -237,11 +237,11 @@ module.exports = function(app, passport) {
             console.log(err);
           } else {
 
-            console.log('found mail: ' + mail.id); //debug
+            console.log('found mail: ' + mail.id + ' by sender ' + mail.sender); //debug
 
             //find the User
             User.find({
-              email: mail.sender
+              "email": mail.sender
             }, function(err, user) {
 
               if (err) {console.log(err);}
