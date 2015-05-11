@@ -32,9 +32,9 @@ var config = require('../config/config.js'),
   async = require('async'),
 
   // Deposit Account
-  depositAccount = 1337387, //that's 1337DEP
-  withdrawalAccount = 1337948, //that's 1337WIT
-  mailmanAccount = 13372665; //that's 1337COOL
+  depositAccount = "deposit", //that's 1337DEP
+  withdrawalAccount = "withdrawal", //that's 1337WIT
+  mailmanAccount = "mailman"; //that's 1337COOL
 
 
 module.exports = function(app, passport) {
@@ -471,7 +471,7 @@ function transferBalance (transactionObject, acallback) {
 }
 
 
-function userBalance(user) {
+function userBalance (user) {
   Transaction.aggregate()
     .match({
       "$or": [{
@@ -490,10 +490,9 @@ function userBalance(user) {
           "$amount"
         ]
       },
-      "account": user
     })
     .group({
-      "_id": "$creditAccount",
+      "_id": user,
       "total": {
         "$sum": "$balance"
       }
