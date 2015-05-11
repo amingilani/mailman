@@ -258,7 +258,7 @@ module.exports = function(app, passport) {
                   "tx" : req.body.transaction.hash
                 };
 
-                transferBalance(depositTransaction, function(err, transaction){if (err){console.log(err);} else {
+                transferBalance (depositTransaction, function(err, transaction){if (err){console.log(err);} else {
                   // append the transaction.id to the mail
                   Mail.findByIdAndUpdate(mail._id, {
                       $push: {
@@ -281,7 +281,7 @@ module.exports = function(app, passport) {
                 };
 
                 // transfer deposit to Mailman
-                transferBalance(depositTransaction, function(err, transaction){if (err){console.log(err);}});
+                transferBalance (depositTransaction, function(err, transaction){if (err){console.log(err);}});
               });
 
 
@@ -421,47 +421,53 @@ module.exports = function(app, passport) {
 
 };
 
-function transferBalance(transactionObject, callback) {
-/*
-// dummy transactionObject
-  demTrans = {
-    "from" : 1,
-    "to" : 2,
-    "amount" : 2,
-    "address": "thisIsNotAValidAddress",
-    "tx" : "thisIsNotAValidTx"
-  };
+function transferBalance (transactionObject, acallback) {
 
-*/
+  /*
+  // dummy transactionObject
+    demTrans = {
+      "from" : 1,
+      "to" : 2,
+      "amount" : 2,
+      "address": "thisIsNotAValidAddress",
+      "tx" : "thisIsNotAValidTx"
+    };
 
-  // because i'm too lazy to change the names everywhere
-  var from = transactionObject.from;
-  var to = transactionObject.to;
+  */
 
-  userBalance(from);
-  userBalance(to);
-
-
-  transaction = new Transaction();
-  if (transactionObject.address) {
-    transaction.address = transactionObject.address;
-  }
-  if (transactionObject.tx) {
-    transaction.tx = transactionObject.tx;
-  }
-  transaction.debitAccount = transactionObject.from; // with reference to the reciever
-  transaction.creditAccount = transactionObject.to; // in the account of the sender
-  transaction.amount = transactionObject.amount; // of the given amount
-  transaction.save(function(err, transaction) {
-    console.log("Credited User " + transaction.creditAccount +
-      " and debited User " + transaction.debitAccount + " by amount " +
-      transaction.amount + " BTC");
-    userBalance(transaction.creditAccount);
-    userBalance(transaction.debitAccount);
-    if (callback) {
-      callback(err, transaction);
-    }
-  });
+  async.series([
+      function(callback) {
+        userBalance(transactionObject.from);
+        userBalance(transactionObject.to);
+        callback(null);
+      },
+      function(callback) {
+        transaction = new dummyTx();
+        if (transactionObject.address) {
+          transaction.address = transactionObject.address;
+        }
+        if (transactionObject.tx) {
+          transaction.tx = transactionObject.tx;
+        }
+        transaction.debitAccount = transactionObject.from; // with reference to the reciever
+        transaction.creditAccount = transactionObject.to; // in the account of the sender
+        transaction.amount = transactionObject.amount; // of the given amount
+        transaction.save(function(err, transaction) {callback(err, transaction);});
+      },
+      function(callback) {
+        console.log("Credited User " + transactionObject.to +
+          " and debited User " + transactionObject.from + " by amount " +
+          transaction.amount + " BTC");
+        callback(null);
+      },
+      function(callback) {
+        userBalance(transactionObject.from);
+        userBalance(transactionObject.to);
+        callback(null);
+      }
+    ],
+    acallback
+  );
 }
 
 
