@@ -241,7 +241,7 @@ module.exports = function(app, passport) {
 
             //find the User
             User.find({
-              "email": mail.sender
+              "local.email": mail.sender
             }, function(err, user) {
 
               if (err) {console.log(err);}
