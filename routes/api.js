@@ -442,7 +442,7 @@ function transferBalance (transactionObject, acallback) {
         callback(null);
       },
       function(callback) {
-        transaction = new dummyTx();
+        transaction = new Transaction();
         if (transactionObject.address) {
           transaction.address = transactionObject.address;
         }
