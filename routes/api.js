@@ -104,7 +104,7 @@ module.exports = function(app, passport) {
           // check if the sender and reciever have accounts
 
           User.findOne({
-            'local.email': mail.sender
+            'local.email': mail.to
           }, function(err, user) {
             if (!err) {
               console.log(err);
