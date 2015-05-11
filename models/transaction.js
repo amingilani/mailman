@@ -2,9 +2,9 @@ var mongoose = require('mongoose');
 
 
 var transactionSchema = mongoose.Schema({
-  debitAccount: Number,
-  creditAccount: Number,
-  refMailId: Number,
+  debitAccount: String,
+  creditAccount: String,
+  refMailId: String,
   address: String,
   amount: Number,
   tx: String
