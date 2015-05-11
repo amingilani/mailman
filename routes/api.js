@@ -416,8 +416,6 @@ module.exports = function(app, passport) {
 
 };
 
-var dummyTx = mongoose.model('dummyTx', dummyschema);
-
 function transferBalance(transactionObject, callback) {
 /*
 // dummy transactionObject
