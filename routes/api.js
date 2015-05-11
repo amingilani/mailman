@@ -241,8 +241,12 @@ module.exports = function(app, passport) {
 
             //find the User
             User.find({
-              email: user.email
+              email: mail.sender
             }, function(err, user) {
+
+              if (err) {console.log(err);}
+
+              if (user) {console.log("Email belongs to user " + user.id);}
 
                 // deposit the amount in the User's account
                 var depositTransaction ={
