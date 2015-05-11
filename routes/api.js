@@ -102,6 +102,7 @@ module.exports = function(app, passport) {
           mail.subject = req.body.subject;
 
           // check if the sender and reciever have accounts
+
           User.findOne({
             'local.email': mail.sender
           }, function(err, user) {
@@ -117,7 +118,7 @@ module.exports = function(app, passport) {
             }
           });
 
-          User.find({
+          User.findOne({
             'local.email': mail.from
           }, function(err, user) {
             if (!err) {
@@ -240,7 +241,7 @@ module.exports = function(app, passport) {
             console.log('found mail: ' + mail.id + ' by sender ' + mail.sender); //debug
 
             //find the User
-            User.find({
+            User.findOne({
               "local.email": mail.sender
             }, function(err, user) {
 
