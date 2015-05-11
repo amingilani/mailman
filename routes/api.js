@@ -102,7 +102,7 @@ module.exports = function(app, passport) {
           mail.subject = req.body.subject;
 
           // check if the sender and reciever have accounts
-          User.find({
+          User.findOne({
             'local.email': mail.to
           }, function(err, user) {
             if (!err) {
