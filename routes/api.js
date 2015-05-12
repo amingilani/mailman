@@ -276,7 +276,7 @@ module.exports = function(app, passport) {
                       upsert: true
                     },
                     function(err, model) {
-                      console.log(err);
+                      if (err) {console.log(err);}
                     }
                   );
                 }
@@ -289,7 +289,7 @@ module.exports = function(app, passport) {
               };
 
               // transfer deposit to Mailman
-              transferBalance(depositTransaction, function(err, transaction) {
+              transferBalance(mailmanTransaction, function(err, transaction) {
                 if (err) {
                   console.log(err);
                 }
