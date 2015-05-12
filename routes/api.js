@@ -86,21 +86,23 @@ module.exports = function(app, passport) {
           User.findOne({'local.email' : mail.to}, function(err, user) {
             if (err) {console.log(err);} else {
 
+              rewardByMailId(mail.id, function(err, object) {
+                if (err) {
+                  console.log(err);
+                } else {
+                  console.log("Mail " + mailId + " has reward " + object[0].total);
+                  // transfer the balance into the recepient's account
+                  var rewardTransaction = {
+                    "from": mailmanAccount,
+                    "to": mail.to, // the recepient of the original mail
+                    "amount": object[0].total // TODO calculate the amount
+                  };
+                  transferBalance(rewardTransaction, function(err){if (err) console.log(err);});
+                }
+              });
+              }
 
-              // transfer the balance into the recepient's account
-              var rewardTransaction = {
-                "from": mailmanAccount,
-                "to": user.id,
-                "amount": "thisIsNotAValidAmount" // TODO calculate the amount
-              };
-
-              transferBalance(rewardTransaction, function(err){if (err) console.log(err);});
-            }
           });
-          // TODO pay the recepient
-          // LOTSA CODE
-
-
         } else if (!mail) {
           // if no such mail exists
           console.log('Mailman classified it as a new email'); //debug
@@ -506,40 +508,25 @@ function transferBalance(transactionObject, acallback) {
   );
 }
 
-
-function rewardByMailId(user) {
+function rewardByMailId(mailId,callback) {
   Transaction.aggregate()
     .match({
-      "$or": [{
-        "debitAccount": user
+      "$and": [{
+        "mailId": mailId
       }, {
-        "creditAccount": user
+        "creditAccount": mailmanAccount
       }]
     })
     .project({
-      "balance": {
-        "$cond": [{
-            "$eq": ["$debitAccount", user]
-          }, {
-            "$multiply": [-1, "$amount"]
-          },
-          "$amount"
-        ]
-      }
+      "balance": "$amount"
     })
     .group({
-      "_id": user,
+      "_id": mailId,
       "total": {
         "$sum": "$balance"
       }
     })
-    .exec(function(err, object) {
-      if (err) {
-        console.log(err);
-      } else {
-        console.log("User " + user + " has balance " + object[0].total);
-      }
-    });
+    .exec(callback);
 }
 
 function userBalance(user) {
