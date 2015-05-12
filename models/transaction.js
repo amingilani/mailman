@@ -4,7 +4,7 @@ var mongoose = require('mongoose');
 var transactionSchema = mongoose.Schema({
   debitAccount: String,
   creditAccount: String,
-  MailId: String,
+  mailId: String,
   address: String,
   amount: Number,
   tx: String
