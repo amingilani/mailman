@@ -35,9 +35,8 @@ var config = require('../config/config.js'),
   // Deposit Account
   depositAccount = "deposit", //that's 1337DEP
   withdrawalAccount = "withdrawal", //that's 1337WIT
-  mailmanAccount = "mailman"; //that's 1337COOL
-
-var mailmanAddress = /\bmailman@mailman\.ninja\b/i; // mailman's email address in regex
+  mailmanAccount = "mailman", //that's 1337COOL
+  mailmanAddress = /\bmailman@mailman\.ninja\b/i; // mailman's email address in regex
 
 module.exports = function(app, passport) {
 
@@ -105,7 +104,7 @@ module.exports = function(app, passport) {
   function payRewardForReply(mail) {
 
     // if the mail exists and is being sent back from the original sender
-    console.log('Recieved confirmation of a reply from original sender for mail:' + mail.id); //debug
+    console.log('Recieved a reply from original sender for mail:' + mail.id); //debug
 
     User.findOne({
       'local.email': mail.to
