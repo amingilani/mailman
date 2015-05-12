@@ -11,6 +11,7 @@ var config = require('../config/config.js'),
   User = require('../models/user.js'), // Mail model
   Transaction = require('../models/transaction.js'), // Transaction model
   // Coinbase
+  fee = 1/2, //mailman keeps half of the money TODO find a better fee rate
   Client = require('coinbase').Client,
   client = new Client({
     'apiKey': config.coinbase.testnet.key,
@@ -82,6 +83,20 @@ module.exports = function(app, passport) {
           // if the mail exists and is being sent back from the original sender
           console.log('Recieved confirmation of a reply from original sender for mail:' + mail.id); //debug
 
+          User.findOne({'local.email' : mail.to}, function(err, user) {
+            if (err) {console.log(err);} else {
+
+
+              // transfer the balance into the recepient's account
+              var rewardTransaction = {
+                "from": mailmanAccount,
+                "to": user.id,
+                "amount": "thisIsNotAValidAmount" // TODO calculate the amount
+              };
+
+              transferBalance(rewardTransaction, function(err){if (err) console.log(err);});
+            }
+          });
           // TODO pay the recepient
           // LOTSA CODE
 
@@ -259,7 +274,8 @@ module.exports = function(app, passport) {
                 "to": user.id,
                 "amount": req.body.amount,
                 "address": req.body.address,
-                "tx": req.body.transaction.hash
+                "tx": req.body.transaction.hash,
+                "mailId" : mail.id
               };
 
               transferBalance(depositTransaction, function(err, transaction) {
@@ -285,7 +301,8 @@ module.exports = function(app, passport) {
               var mailmanTransaction = {
                 "from": user.id,
                 "to": mailmanAccount,
-                "amount": req.body.amount
+                "amount": req.body.amount,
+                "mailId" : mail.id
               };
 
               // transfer deposit to Mailman
@@ -342,6 +359,7 @@ module.exports = function(app, passport) {
               });
 
               // pay the recepient their share of the fee
+
             }
           }
         });
@@ -443,6 +461,7 @@ function transferBalance(transactionObject, acallback) {
       "amount" : 2,
       "address": "thisIsNotAValidAddress",
       "tx" : "thisIsNotAValidTx"
+      "mailId" : "thisIsNotAValidMailId"
     };
 
   */
@@ -460,6 +479,9 @@ function transferBalance(transactionObject, acallback) {
         }
         if (transactionObject.tx) {
           transaction.tx = transactionObject.tx;
+        }
+        if (transactionObject.mailId) {
+          transaction.mailId = transactionObject.mailId;
         }
         transaction.debitAccount = transactionObject.from; // with reference to the reciever
         transaction.creditAccount = transactionObject.to; // in the account of the sender
@@ -484,6 +506,41 @@ function transferBalance(transactionObject, acallback) {
   );
 }
 
+
+function rewardByMailId(user) {
+  Transaction.aggregate()
+    .match({
+      "$or": [{
+        "debitAccount": user
+      }, {
+        "creditAccount": user
+      }]
+    })
+    .project({
+      "balance": {
+        "$cond": [{
+            "$eq": ["$debitAccount", user]
+          }, {
+            "$multiply": [-1, "$amount"]
+          },
+          "$amount"
+        ]
+      }
+    })
+    .group({
+      "_id": user,
+      "total": {
+        "$sum": "$balance"
+      }
+    })
+    .exec(function(err, object) {
+      if (err) {
+        console.log(err);
+      } else {
+        console.log("User " + user + " has balance " + object[0].total);
+      }
+    });
+}
 
 function userBalance(user) {
   Transaction.aggregate()
