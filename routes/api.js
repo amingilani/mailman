@@ -245,20 +245,27 @@ module.exports = function(app, passport) {
               "local.email": mail.sender
             }, function(err, user) {
 
-              if (err) {console.log(err);}
+              if (err) {
+                console.log(err);
+              }
 
-              if (user) {console.log("Email belongs to user " + user.id);}
+              if (user) {
+                console.log("Email belongs to user " + user.id);
+              }
 
-                // deposit the amount in the User's account
-                var depositTransaction ={
-                  "from" : depositAccount,
-                  "to" : user.id,
-                  "amount" : req.body.amount,
-                  "address": req.body.address,
-                  "tx" : req.body.transaction.hash
-                };
+              // deposit the amount in the User's account
+              var depositTransaction = {
+                "from": depositAccount,
+                "to": user.id,
+                "amount": req.body.amount,
+                "address": req.body.address,
+                "tx": req.body.transaction.hash
+              };
 
-                transferBalance (depositTransaction, function(err, transaction){if (err){console.log(err);} else {
+              transferBalance(depositTransaction, function(err, transaction) {
+                if (err) {
+                  console.log(err);
+                } else {
                   // append the transaction.id to the mail
                   Mail.findByIdAndUpdate(mail._id, {
                       $push: {
@@ -272,17 +279,22 @@ module.exports = function(app, passport) {
                       console.log(err);
                     }
                   );
-                }});
-
-                var mailmanTransaction ={
-                  "from" : user.id,
-                  "to" : mailmanAccount,
-                  "amount" : req.body.amount
-                };
-
-                // transfer deposit to Mailman
-                transferBalance (depositTransaction, function(err, transaction){if (err){console.log(err);}});
+                }
               });
+
+              var mailmanTransaction = {
+                "from": user.id,
+                "to": mailmanAccount,
+                "amount": req.body.amount
+              };
+
+              // transfer deposit to Mailman
+              transferBalance(depositTransaction, function(err, transaction) {
+                if (err) {
+                  console.log(err);
+                }
+              });
+            });
 
 
             //determine what sort of mail this was
@@ -421,7 +433,7 @@ module.exports = function(app, passport) {
 
 };
 
-function transferBalance (transactionObject, acallback) {
+function transferBalance(transactionObject, acallback) {
 
   /*
   // dummy transactionObject
@@ -452,7 +464,9 @@ function transferBalance (transactionObject, acallback) {
         transaction.debitAccount = transactionObject.from; // with reference to the reciever
         transaction.creditAccount = transactionObject.to; // in the account of the sender
         transaction.amount = transactionObject.amount; // of the given amount
-        transaction.save(function(err, transaction) {callback(err, transaction);});
+        transaction.save(function(err, transaction) {
+          callback(err, transaction);
+        });
       },
       function(callback) {
         console.log("Credited User " + transactionObject.to +
@@ -471,7 +485,7 @@ function transferBalance (transactionObject, acallback) {
 }
 
 
-function userBalance (user) {
+function userBalance(user) {
   Transaction.aggregate()
     .match({
       "$or": [{
