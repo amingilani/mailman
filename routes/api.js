@@ -503,7 +503,7 @@ function userBalance(user) {
           },
           "$amount"
         ]
-      },
+      }
     })
     .group({
       "_id": user,
@@ -512,6 +512,10 @@ function userBalance(user) {
       }
     })
     .exec(function(err, object) {
-      console.log("User " + user + " has balance " + object[0].total);
+      if (err) {
+        console.log(err);
+      } else {
+        console.log("User " + user + " has balance " + object[0].total);
+      }
     });
 }
