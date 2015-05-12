@@ -291,165 +291,166 @@ module.exports = function(app, passport) {
 
   function handleMailDbRequest(req, mail) {
 
-    if (mail) {
-      console.log('found mail: ' + mail.id + ' by sender ' + mail.sender); //debug
-      //find the User
-      User.findOne({
-        "local.email": mail.sender
-      }, handleNewDeposit());
+      if (mail) {
+        console.log('found mail: ' + mail.id + ' by sender ' + mail.sender); //debug
+        //find the User
+        User.findOne({
+          "local.email": mail.sender
+        }, handleNewDeposit());
 
-      //determine what sort of mail this was
-      if (mail.type === 'reward') {
-        issueRewardNotification(mail);
-      } // if the mail is an incoming mail sent to a user
-      else if (mail.type === 'incoming') {
-        forwardMailAndMoney(mail);
-      }
-    }
-
-    function forwardMailAndMoney(mail) {
-      //TODO write a code to forward the original email to the actual
-      // reciever with a custom ReplyTo to the original sender
-      console.log("Let's just pretend the email and money are" +
-        "magically delivered");
-    }
-
-    function handleNewDeposit(user) {
-
-      if (user) {
-        console.log("Emailaddress belongs to user " + user.id);
-      }
-
-      // deposit the amount in the User's account
-      var depositTransaction = {
-        "from": depositAccount,
-        "to": user.id,
-        "amount": req.body.amount,
-        "address": req.body.address,
-        "tx": req.body.transaction.hash,
-        "mailId": mail.id
-      };
-
-      transferBalance(depositTransaction);
-
-      var mailmanTransaction = {
-        "from": user.id,
-        "to": mailmanAccount,
-        "amount": req.body.amount,
-        "mailId": mail.id
-      };
-
-      // transfer deposit to Mailman
-      transferBalance(mailmanTransaction);
-    }
-
-    function issueRewardNotification(mail) {
-      var originalRecipient = mail.to;
-      console.log("sending mail reward notification to " +
-        originalRecipient);
-      // mail the person saying there is a reward available
-      mg.sendText('Mailman <mailman@mailman.ninja>', [originalRecipient],
-        'RE: ' + mail.subject,
-        'Hi, there\'s a ' + req.body.amount + ' BTC ' +
-        'reward on replying to this email.\n ' +
-        'Just keep `mailman@mailman.ninja` in the CC field so that I ' +
-        'know you\'ve replied!',
-        'noreply@mailman.ninja', {},
-        function(err) {
-          if (err) {
-            console.log(err + '\n' +
-              'Could not send reward notifcation for mail' + mail.id);
-          } else {
-            console.log('Success');
-          }
-        });
-
-    }
-
-    // new mail to specifc user
-    app.post('/api/mail/:user_id', function(req, res) {
-      console.log(req.body.lol);
-      res.send(req.body['lol-hello']);
-
-      var mail = new Mail();
-
-      mail.type = "incoming";
-      mail.incomingEmail = req.params.user.id;
-      mail.to = req.body.to;
-      mail.date = req.body.Date;
-      mail.cc = req.body.Cc;
-      mail.recipient = req.body.recipient;
-      mail.sender = req.body.sender;
-      mail.from = req.body.from;
-      mail.subject = req.body.subject;
-      mail.bodyPlain = req.body['body-plain'];
-      mail.strippedText = req.body['stripped-text'];
-      mail.strippedSignature = req.body['stripped-signature'];
-      mail.bodyHtml = req.body['body-html'];
-      mail.strippedHtml = req.body['stripped-html'];
-      mail.attachmentCount = req.body['attachment-count'];
-      mail.attachmentx = req.body['attachment-x'];
-      mail.messageHeaders = req.body['message-headers'];
-      mail.contentIdMap = req.body['content-id-map'];
-
-      var callbackToken = jwt.sign({
-        'mail_id': mail.id,
-      }, secret);
-
-      var addressArgs = {
-        'callback_url': 'http://the.mailman.ninja/api/payment/' + mail.id +
-          '?token=' + callbackToken,
-        'label': mail.id
-      };
-
-      btcAccount.createAddress(addressArgs, function(err, address) {
-        if (err) {
-          // output error and save mail
-          console.log(err);
-          mail.save();
-        } else {
-          // save the address and save the mail
-          mail.btcAddress = address.address;
-          mail.save();
-
-          // send an invoice to the sender
-          mg.sendText('Mailman <mailman@mailman.ninja>', [mail.sender],
-            'RE: ' + mail.subject,
-            'Hi, your email will only be delivered if you pay for its delivery.\n' +
-            'Please pay at this address: ' + mail.btcAddress,
-            'noreply@mailman.ninja', {},
-            function(err) {
-              if (err) console.log('Unable to deliver invoice for mail ' +
-                mail.id + '\nerror: ' + err);
-              else console.log('Success');
-            });
+        //determine what sort of mail this was
+        if (mail.type === 'reward') {
+          issueRewardNotification(mail);
+        } // if the mail is an incoming mail sent to a user
+        else if (mail.type === 'incoming') {
+          forwardMailAndMoney(mail);
         }
-      });
+      }
 
+      function forwardMailAndMoney(mail) {
+        //TODO write a code to forward the original email to the actual
+        // reciever with a custom ReplyTo to the original sender
+        console.log("Let's just pretend the email and money are" +
+          "magically delivered");
+      }
+
+      function handleNewDeposit(user) {
+
+        if (user) {
+          console.log("Emailaddress belongs to user " + user.id);
+        }
+
+        // deposit the amount in the User's account
+        var depositTransaction = {
+          "from": depositAccount,
+          "to": user.id,
+          "amount": req.body.amount,
+          "address": req.body.address,
+          "tx": req.body.transaction.hash,
+          "mailId": mail.id
+        };
+
+        transferBalance(depositTransaction);
+
+        var mailmanTransaction = {
+          "from": user.id,
+          "to": mailmanAccount,
+          "amount": req.body.amount,
+          "mailId": mail.id
+        };
+
+        // transfer deposit to Mailman
+        transferBalance(mailmanTransaction);
+      }
+
+      function issueRewardNotification(mail) {
+        var originalRecipient = mail.to;
+        console.log("sending mail reward notification to " +
+          originalRecipient);
+        // mail the person saying there is a reward available
+        mg.sendText('Mailman <mailman@mailman.ninja>', [originalRecipient],
+          'RE: ' + mail.subject,
+          'Hi, there\'s a ' + req.body.amount + ' BTC ' +
+          'reward on replying to this email.\n ' +
+          'Just keep `mailman@mailman.ninja` in the CC field so that I ' +
+          'know you\'ve replied!',
+          'noreply@mailman.ninja', {},
+          function(err) {
+            if (err) {
+              console.log(err + '\n' +
+                'Could not send reward notifcation for mail' + mail.id);
+            } else {
+              console.log('Success');
+            }
+          });
+
+      }
+
+    }
+    // new mail to specifc user
+  app.post('/api/mail/:user_id', function(req, res) {
+    console.log(req.body.lol);
+    res.send(req.body['lol-hello']);
+
+    var mail = new Mail();
+
+    mail.type = "incoming";
+    mail.incomingEmail = req.params.user.id;
+    mail.to = req.body.to;
+    mail.date = req.body.Date;
+    mail.cc = req.body.Cc;
+    mail.recipient = req.body.recipient;
+    mail.sender = req.body.sender;
+    mail.from = req.body.from;
+    mail.subject = req.body.subject;
+    mail.bodyPlain = req.body['body-plain'];
+    mail.strippedText = req.body['stripped-text'];
+    mail.strippedSignature = req.body['stripped-signature'];
+    mail.bodyHtml = req.body['body-html'];
+    mail.strippedHtml = req.body['stripped-html'];
+    mail.attachmentCount = req.body['attachment-count'];
+    mail.attachmentx = req.body['attachment-x'];
+    mail.messageHeaders = req.body['message-headers'];
+    mail.contentIdMap = req.body['content-id-map'];
+
+    var callbackToken = jwt.sign({
+      'mail_id': mail.id,
+    }, secret);
+
+    var addressArgs = {
+      'callback_url': 'http://the.mailman.ninja/api/payment/' + mail.id +
+        '?token=' + callbackToken,
+      'label': mail.id
+    };
+
+    btcAccount.createAddress(addressArgs, function(err, address) {
+      if (err) {
+        // output error and save mail
+        console.log(err);
+        mail.save();
+      } else {
+        // save the address and save the mail
+        mail.btcAddress = address.address;
+        mail.save();
+
+        // send an invoice to the sender
+        mg.sendText('Mailman <mailman@mailman.ninja>', [mail.sender],
+          'RE: ' + mail.subject,
+          'Hi, your email will only be delivered if you pay for its delivery.\n' +
+          'Please pay at this address: ' + mail.btcAddress,
+          'noreply@mailman.ninja', {},
+          function(err) {
+            if (err) console.log('Unable to deliver invoice for mail ' +
+              mail.id + '\nerror: ' + err);
+            else console.log('Success');
+          });
+      }
     });
 
-    // User authorization (login)
-    app.post('/api/user/auth', passport.authenticate('local-login', {
-      successRedirect: '/user', // redirect to the user
-      failureRedirect: '/', // redirect back to the home page on error
-      failureFlash: true // allow flash messages
-    }));
+  });
 
-    // User signup
-    app.post('/api/user/new', passport.authenticate('local-signup', {
-      successRedirect: '/profile', // redirect to the secure profile section
-      failureRedirect: '/signup', // redirect back to the signup page if there is an error
-      failureFlash: true // allow flash messages
-    }));
+  // User authorization (login)
+  app.post('/api/user/auth', passport.authenticate('local-login', {
+    successRedirect: '/user', // redirect to the user
+    failureRedirect: '/', // redirect back to the home page on error
+    failureFlash: true // allow flash messages
+  }));
 
-    // User logout
-    app.get('/api/user/logout', function logoutTheUser(req, res) {
-      req.logout();
-      res.redirect('/');
-    });
+  // User signup
+  app.post('/api/user/new', passport.authenticate('local-signup', {
+    successRedirect: '/profile', // redirect to the secure profile section
+    failureRedirect: '/signup', // redirect back to the signup page if there is an error
+    failureFlash: true // allow flash messages
+  }));
 
-  }
+  // User logout
+  app.get('/api/user/logout', function logoutTheUser(req, res) {
+    req.logout();
+    res.redirect('/');
+  });
+
 };
+
 
 function transferBalance(transactionObject, acallback) {
 
