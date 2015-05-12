@@ -448,11 +448,11 @@ function transferBalance(transactionObject, acallback) {
   */
 
   async.series([
-      function(callback) {
+    /*function(callback) {
         userBalance(transactionObject.from);
         userBalance(transactionObject.to);
         callback(null);
-      },
+      },*/
       function(callback) {
         transaction = new Transaction();
         if (transactionObject.address) {
@@ -473,12 +473,12 @@ function transferBalance(transactionObject, acallback) {
           " and debited User " + transactionObject.from + " by amount " +
           transaction.amount + " BTC");
         callback(null);
-      },
+      }/*,
       function(callback) {
         userBalance(transactionObject.from);
         userBalance(transactionObject.to);
         callback(null);
-      }
+      }*/
     ],
     acallback
   );
