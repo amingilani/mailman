@@ -11,7 +11,7 @@ var config = require('../config/config.js'),
   User = require('../models/user.js'), // Mail model
   Transaction = require('../models/transaction.js'), // Transaction model
   // Coinbase
-  fee = 1/2, //mailman keeps half of the money TODO find a better fee rate
+  fee = 1 / 2, //mailman keeps half of the money TODO find a better fee rate
   Client = require('coinbase').Client,
   client = new Client({
     'apiKey': config.coinbase.testnet.key,
@@ -37,6 +37,7 @@ var config = require('../config/config.js'),
   withdrawalAccount = "withdrawal", //that's 1337WIT
   mailmanAccount = "mailman"; //that's 1337COOL
 
+var mailmanAddress = /\bmailman@mailman\.ninja\b/i; // mailman's email address in regex
 
 module.exports = function(app, passport) {
 
@@ -48,7 +49,9 @@ module.exports = function(app, passport) {
   });
 
   // `/mailman`
-  app.post('/api/mailman', function(req, res) {
+  app.post('/api/mailman', mailmanGetsAMail(req, res));
+
+  function mailmanGetsAMail(req, res) {
 
     res.json({
       success: true,
@@ -57,157 +60,183 @@ module.exports = function(app, passport) {
 
     console.log('mailman recieved an email'); //debug
 
-    var mailmanAddress = /\bmailman@mailman\.ninja\b/i; // mailman's email address in regex
+    if (!mailmanAddress.test(req.body.Cc)) {
+      console.log('mailman addressed CC field: false');
+    } else {
+      // if mailman was CCed into the mail.
+      console.log('mailman addressed CC field: true'); //debug
+      findMailInDb(req);
+    }
+  }
 
-    if (mailmanAddress.test(req.body.Cc)) {
-      // proceed if mailman was CCed into the mail.
+  function findMailInDb(req) {
 
-      console.log('Mailman was addressed in the CC field'); //debug
+    // Regex expression to for "re:", "fw:" "fwd:", etc.
+    var junkRegex = /([\[\(] *)?(RE|FWD?) *([-:;)\]][ :;\])-]*|$)|\]+ *$/igm;
+    var subjectStripped = req.body.subject.replace(junkRegex, "");
 
+    console.log('the original subject was "' + req.body.subject + '"' +
+      '\nMailman stripped it to "' + subjectStripped + '"'); //debug
 
+    Mail.findOne({
+      'subjectStripped': subjectStripped
+    }, handleDbResponse(err, req, mail));
+  }
 
-      // Regex expression to for "re:", "fw:" "fwd:", etc.
-      var junkRegex = /([\[\(] *)?(RE|FWD?) *([-:;)\]][ :;\])-]*|$)|\]+ *$/igm;
-      var subjectStripped = req.body.subject.replace(junkRegex, "");
+  function handleDbResponse(err, req, mail) {
+    if (err) {
+      console.log(err);
+    }
+    if (!mail) {
+      saveNewMail(req);
+    } else if (
+      // the mail exists
+      mail && (
+        // the original sender is now the reciever
+        mail.to === req.body.From &&
+        // the original reciever is now the sender
+        mail.from === req.body.To
+      )
+    ) {
+      payRewardForReply(mail);
+    }
+  }
 
-      console.log('the original subject was "' + req.body.subject + '"' +
-        ' but Mailman stripped it to "' + subjectStripped + '"'); //debug
+  function payRewardForReply(mail) {
 
-      Mail.findOne({
-        'subjectStripped': subjectStripped
-      }, function(err, mail) {
+    // if the mail exists and is being sent back from the original sender
+    console.log('Recieved confirmation of a reply from original sender for mail:' + mail.id); //debug
+
+    User.findOne({
+      'local.email': mail.to
+    }, function(err, user) {
+      if (err) {
+        console.log(err);
+      } else {
+
+        calculateRewardByMailId(mail.id);
+      }
+
+    });
+  }
+
+  function calculateRewardByMailId(mailId) {
+    Transaction.aggregate()
+      .match({
+        "$and": [{
+          "mailId": mailId
+        }, {
+          "creditAccount": mailmanAccount
+        }]
+      })
+      .project({
+        "balance": "$amount"
+      })
+      .group({
+        "_id": mailId,
+        "total": {
+          "$sum": "$balance"
+        }
+      })
+      .exec(transferRewardByMailId());
+  }
+
+  function transferRewardByMailId(object) {
+
+    console.log("Mail " + mail.id + " has reward " + object[0].total);
+    // transfer the balance into the recepient's account
+    var rewardTransaction = {
+      "from": mailmanAccount,
+      "to": mail.to, // the recepient of the original mail
+      "amount": object[0].total // TODO calculate the amount
+    };
+    transferBalance(rewardTransaction, function(err) {
+      if (err) console.log(err);
+    });
+
+  }
+
+  function saveNewMail(req) {
+    // if no such mail exists
+    console.log('Mailman classified it as a new email'); //debug
+
+    // save the metadata
+    mail = new Mail();
+    mail.type = "reward";
+    mail.to = req.body.To;
+    mail.recipient = req.body.recipient;
+    mail.date = req.body.Date;
+    mail.cc = req.body.Cc;
+    mail.sender = req.body.sender;
+    mail.from = req.body.from;
+    mail.subject = req.body.subject;
+
+    // check if the sender and reciever have accounts
+
+    checkIfUserExistsByEmail(mail.to);
+    checkIfUserExists(mail.from);
+
+    // strip all re, and fwd from subject before saving as the stripped subject
+    mail.subjectStripped = req.body.subject.replace(junkRegex, "");
+
+    mail.save(createInvoiceAddress(mail));
+  }
+
+  function createInvoiceAddress(mail) {
+    //create the address
+
+    var callbackToken = jwt.sign({
+      'mail_id': mail.id,
+    }, secret);
+
+    btcAccount.createAddress({
+      "callback_url": 'http://the.mailman.ninja/api/payment/' +
+        mail.id + '?token=' + callbackToken,
+      "label": ""
+    }, sendRewardInvoice(err, address));
+  }
+
+  function checkIfUserExistsByEmail(address) {
+    User.findOne({
+      'local.email': address
+    }, saveANewUserByEmail(user));
+  }
+
+  function saveANewUserByEmail(user) {
+    if (!user) {
+      var newUser = new User();
+      newUser.local.email = mail.to;
+      newUser.save(
+        console.log('Saving new user ' + newUser.id +
+          ' for email address' + newUser.local.email)
+      );
+    }
+  }
+
+  function sendRewardInvoice(err, address) {
+    // send an invoice to the sender
+    mg.sendText('Mailman <mailman@mailman.ninja>', [mail.sender],
+      'RE: ' + mail.subject,
+      'Hi, pay the reward here: ' + mail.btcAddress,
+      'noreply@mailman.ninja', {},
+      function savedMail(err) {
         if (err) {
-          console.log(err);
-        } else if (mail && (mail.to === req.body.From &&
-            mail.from === req.body.To)) {
-          // if the mail exists and is being sent back from the original sender
-          console.log('Recieved confirmation of a reply from original sender for mail:' + mail.id); //debug
-
-          User.findOne({'local.email' : mail.to}, function(err, user) {
-            if (err) {console.log(err);} else {
-
-              rewardByMailId(mail.id, function(err, object) {
-                if (err) {
-                  console.log(err);
-                } else {
-                  console.log("Mail " + mail.id + " has reward " + object[0].total);
-                  // transfer the balance into the recepient's account
-                  var rewardTransaction = {
-                    "from": mailmanAccount,
-                    "to": mail.to, // the recepient of the original mail
-                    "amount": object[0].total // TODO calculate the amount
-                  };
-                  transferBalance(rewardTransaction, function(err){if (err) console.log(err);});
-                }
-              });
-              }
-
-          });
-        } else if (!mail) {
-          // if no such mail exists
-          console.log('Mailman classified it as a new email'); //debug
-
-          // save the metadata
-          mail = new Mail();
-          mail.type = "reward";
-          mail.to = req.body.To;
-          mail.recipient = req.body.recipient;
-          mail.date = req.body.Date;
-          mail.cc = req.body.Cc;
-          mail.sender = req.body.sender;
-          mail.from = req.body.from;
-          mail.subject = req.body.subject;
-
-          // check if the sender and reciever have accounts
-
-          User.findOne({
-            'local.email': mail.to
-          }, function(err, user) {
-            if (!err) {
-              console.log(err);
-            } else if (!user) {
-              var newUser = new User();
-              newUser.local.email = mail.to;
-              newUser.save(
-                console.log('Saving new user ' + newUser.id +
-                  ' for email address' + newUser.local.email)
-              );
-            }
-          });
-
-          User.findOne({
-            'local.email': mail.from
-          }, function(err, user) {
-            if (!err) {
-              console.log(err);
-            } else if (!user) {
-              var newUser = new User();
-              newUser.local.email = mail.from;
-              newUser.save(
-                console.log('Saving new user ' + newUser.id +
-                  ' for email address' + newUser.email)
-              );
-            }
-          });
-
-
-          // strip all re, and fwd from subject before saving as the stripped subject
-          mail.subjectStripped = req.body.subject.replace(junkRegex, "");
-
-          //create the address
-
-          var callbackToken = jwt.sign({
-            'mail_id': mail.id,
-          }, secret);
-
-          btcAccount.createAddress({
-            "callback_url": 'http://the.mailman.ninja/api/payment/' +
-              mail.id + '?token=' + callbackToken,
-            "label": ""
-          }, function(err, address) {
-            if (err) {
-              // output error and save mail
-              console.log(err);
-              mail.save(
-                console.log("Couldn't create address, but saved mail")
-              );
-            } else {
-              // save the address and save the mail
-              console.log('Created address ' + address.address); //debug
-              mail.btcAddress = address.address;
-              mail.save(
-                // send an invoice to the sender
-                mg.sendText('Mailman <mailman@mailman.ninja>', [mail.sender],
-                  'RE: ' + mail.subject,
-                  'Hi, pay the reward here: ' + mail.btcAddress,
-                  'noreply@mailman.ninja', {},
-                  function(err) {
-                    if (err) {
-                      console.log('Saved mail ' + mail.id +
-                        ' but unable to deliver invoice for mail ' +
-                        mail.id + '\nerror: ' + err);
-                    } else {
-                      console.log('Saved mail ' + mail.id +
-                        ' and sent invoice for reward mail');
-                    }
-                  })
-              );
-            }
-
-          });
+          console.log('Saved mail ' + mail.id +
+            ' but unable to deliver invoice for mail ' +
+            mail.id + '\nerror: ' + err);
+        } else {
+          console.log('Saved mail ' + mail.id +
+            ' and sent invoice for reward mail');
         }
       });
-    } else {
-      console.log('mailman was not in the CC field');
-    }
-  });
+  }
 
   // When a callback is recieved for a payment made.
   // '/payment/:mail_id'
   app.post('/api/payment/:mail_id', function(req, res) {
 
-    /* Example object to be recieved
-
+    /*
+    // Example object to be recieved
       {
       "address": "1AmB4bxKGvozGcZnSSVJoM6Q56EBhzMiQ5",
       "amount": 1.23456,
@@ -277,7 +306,7 @@ module.exports = function(app, passport) {
                 "amount": req.body.amount,
                 "address": req.body.address,
                 "tx": req.body.transaction.hash,
-                "mailId" : mail.id
+                "mailId": mail.id
               };
 
               transferBalance(depositTransaction, function(err, transaction) {
@@ -294,7 +323,9 @@ module.exports = function(app, passport) {
                       upsert: true
                     },
                     function(err, model) {
-                      if (err) {console.log(err);}
+                      if (err) {
+                        console.log(err);
+                      }
                     }
                   );
                 }
@@ -304,7 +335,7 @@ module.exports = function(app, passport) {
                 "from": user.id,
                 "to": mailmanAccount,
                 "amount": req.body.amount,
-                "mailId" : mail.id
+                "mailId": mail.id
               };
 
               // transfer deposit to Mailman
@@ -446,7 +477,7 @@ module.exports = function(app, passport) {
   }));
 
   // User logout
-  app.get('/api/user/logout', function(req, res) {
+  app.get('/api/user/logout', function logoutTheUser(req, res) {
     req.logout();
     res.redirect('/');
   });
@@ -469,11 +500,11 @@ function transferBalance(transactionObject, acallback) {
   */
 
   async.series([
-    /*function(callback) {
-        userBalance(transactionObject.from);
-        userBalance(transactionObject.to);
-        callback(null);
-      },*/
+      /*function(callback) {
+          userBalance(transactionObject.from);
+          userBalance(transactionObject.to);
+          callback(null);
+        },*/
       function(callback) {
         transaction = new Transaction();
         if (transactionObject.address) {
@@ -497,36 +528,16 @@ function transferBalance(transactionObject, acallback) {
           " and debited User " + transactionObject.from + " by amount " +
           transaction.amount + " BTC");
         callback(null);
-      }/*,
-      function(callback) {
-        userBalance(transactionObject.from);
-        userBalance(transactionObject.to);
-        callback(null);
-      }*/
+      }
+      /*,
+            function(callback) {
+              userBalance(transactionObject.from);
+              userBalance(transactionObject.to);
+              callback(null);
+            }*/
     ],
     acallback
   );
-}
-
-function rewardByMailId(mailId,callback) {
-  Transaction.aggregate()
-    .match({
-      "$and": [{
-        "mailId": mailId
-      }, {
-        "creditAccount": mailmanAccount
-      }]
-    })
-    .project({
-      "balance": "$amount"
-    })
-    .group({
-      "_id": mailId,
-      "total": {
-        "$sum": "$balance"
-      }
-    })
-    .exec(callback);
 }
 
 function userBalance(user) {
