@@ -90,7 +90,7 @@ module.exports = function(app, passport) {
                 if (err) {
                   console.log(err);
                 } else {
-                  console.log("Mail " + mailId + " has reward " + object[0].total);
+                  console.log("Mail " + mail.id + " has reward " + object[0].total);
                   // transfer the balance into the recepient's account
                   var rewardTransaction = {
                     "from": mailmanAccount,
