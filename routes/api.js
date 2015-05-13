@@ -79,13 +79,10 @@ module.exports = function(app, passport) {
 
     Mail.findOne({
       'subjectStripped': subjectStripped
-    }, handleDbResponse(err, req, mail));
+    }, handleDbResponse(req, mail));
   }
 
-  function handleDbResponse(err, req, mail) {
-    if (err) {
-      console.log(err);
-    }
+  function handleDbResponse(req, mail) {
     if (!mail) {
       saveNewMail(req);
     } else if (
@@ -291,83 +288,84 @@ module.exports = function(app, passport) {
 
   function handleMailDbRequest(req, mail) {
 
-      if (mail) {
-        console.log('found mail: ' + mail.id + ' by sender ' + mail.sender); //debug
-        //find the User
-        User.findOne({
-          "local.email": mail.sender
-        }, handleNewDeposit());
+    if (mail) {
+      console.log('found mail: ' + mail.id + ' by sender ' + mail.sender); //debug
+      //find the User
+      User.findOne({
+        "local.email": mail.sender
+      }, handleNewDeposit());
 
-        //determine what sort of mail this was
-        if (mail.type === 'reward') {
-          issueRewardNotification(mail);
-        } // if the mail is an incoming mail sent to a user
-        else if (mail.type === 'incoming') {
-          forwardMailAndMoney(mail);
-        }
+      //determine what sort of mail this was
+      if (mail.type === 'reward') {
+        issueRewardNotification(mail);
+      } // if the mail is an incoming mail sent to a user
+      else if (mail.type === 'incoming') {
+        forwardMailAndMoney(mail);
       }
-
-      function forwardMailAndMoney(mail) {
-        //TODO write a code to forward the original email to the actual
-        // reciever with a custom ReplyTo to the original sender
-        console.log("Let's just pretend the email and money are" +
-          "magically delivered");
-      }
-
-      function handleNewDeposit(user) {
-
-        if (user) {
-          console.log("Emailaddress belongs to user " + user.id);
-        }
-
-        // deposit the amount in the User's account
-        var depositTransaction = {
-          "from": depositAccount,
-          "to": user.id,
-          "amount": req.body.amount,
-          "address": req.body.address,
-          "tx": req.body.transaction.hash,
-          "mailId": mail.id
-        };
-
-        transferBalance(depositTransaction);
-
-        var mailmanTransaction = {
-          "from": user.id,
-          "to": mailmanAccount,
-          "amount": req.body.amount,
-          "mailId": mail.id
-        };
-
-        // transfer deposit to Mailman
-        transferBalance(mailmanTransaction);
-      }
-
-      function issueRewardNotification(mail) {
-        var originalRecipient = mail.to;
-        console.log("sending mail reward notification to " +
-          originalRecipient);
-        // mail the person saying there is a reward available
-        mg.sendText('Mailman <mailman@mailman.ninja>', [originalRecipient],
-          'RE: ' + mail.subject,
-          'Hi, there\'s a ' + req.body.amount + ' BTC ' +
-          'reward on replying to this email.\n ' +
-          'Just keep `mailman@mailman.ninja` in the CC field so that I ' +
-          'know you\'ve replied!',
-          'noreply@mailman.ninja', {},
-          function(err) {
-            if (err) {
-              console.log(err + '\n' +
-                'Could not send reward notifcation for mail' + mail.id);
-            } else {
-              console.log('Success');
-            }
-          });
-
-      }
-
     }
-    // new mail to specifc user
+  }
+
+  function forwardMailAndMoney(mail) {
+    //TODO write a code to forward the original email to the actual
+    // reciever with a custom ReplyTo to the original sender
+    console.log("Let's just pretend the email and money are" +
+      "magically delivered");
+  }
+
+  function handleNewDeposit(user) {
+
+    if (user) {
+      console.log("Emailaddress belongs to user " + user.id);
+    }
+
+    // deposit the amount in the User's account
+    var depositTransaction = {
+      "from": depositAccount,
+      "to": user.id,
+      "amount": req.body.amount,
+      "address": req.body.address,
+      "tx": req.body.transaction.hash,
+      "mailId": mail.id
+    };
+
+    transferBalance(depositTransaction);
+
+    var mailmanTransaction = {
+      "from": user.id,
+      "to": mailmanAccount,
+      "amount": req.body.amount,
+      "mailId": mail.id
+    };
+
+    // transfer deposit to Mailman
+    transferBalance(mailmanTransaction);
+  }
+
+  function issueRewardNotification(mail) {
+    var originalRecipient = mail.to;
+    console.log("sending mail reward notification to " +
+      originalRecipient);
+    // mail the person saying there is a reward available
+    mg.sendText('Mailman <mailman@mailman.ninja>', [originalRecipient],
+      'RE: ' + mail.subject,
+      'Hi, there\'s a ' + req.body.amount + ' BTC ' +
+      'reward on replying to this email.\n ' +
+      'Just keep `mailman@mailman.ninja` in the CC field so that I ' +
+      'know you\'ve replied!',
+      'noreply@mailman.ninja', {},
+      function(err) {
+        if (err) {
+          console.log(err + '\n' +
+            'Could not send reward notifcation for mail' + mail.id);
+        } else {
+          console.log('Success');
+        }
+      });
+
+  }
+
+
+  // new mail to specifc user
   app.post('/api/mail/:user_id', function(req, res) {
     console.log(req.body.lol);
     res.send(req.body['lol-hello']);
