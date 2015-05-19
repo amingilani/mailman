@@ -133,7 +133,7 @@ module.exports = function(app, passport) {
                         "amount": balance,
                         "notes": "Your reward -Mailman"
                       };
-                      account.sendMoney(args, function(err, txn) {
+                      btcAccount.sendMoney(args, function(err, txn) {
                         console.log('my txn id is: ' + txn.id);
                       });
                     });
