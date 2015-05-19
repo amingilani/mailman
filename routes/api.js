@@ -14,16 +14,17 @@ var config = require('../config/config.js'),
   fee = 1 / 2, //mailman keeps half of the money TODO find a better fee rate
   Client = require('coinbase').Client,
   client = new Client({
-    'apiKey': config.coinbase.livenet.key,
-    'apiSecret': config.coinbase.livenet.secret
+    'apiKey': config.coinbase.apiKey,
+    'apiSecret': config.coinbase.apiSec,
+    'baseApiUri': config.coinbase.apiUrl
   }),
   Account = require('coinbase').model.Account,
   btcAccount = new Account(client, {
-    'id': '5526ee2611c7b478f4000372'
+    'id': config.coinbase.accId
   }),
   // Mailgun
   Mailgun = require('mailgun').Mailgun,
-  mg = new Mailgun(config.mailgun),
+  mg = new Mailgun(config.mailgun.apiKey),
 
   // JSON Web Tokens
   jwt = require('jsonwebtoken'),
