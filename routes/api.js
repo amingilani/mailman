@@ -375,21 +375,24 @@ module.exports = function(app, passport) {
               console.log("sending mail reward notification to " +
                 originalRecipient);
               // mail the person saying there is a reward available
-              mg.sendText('Mailman <mailman@mailman.ninja>', [originalRecipient],
-                'RE: ' + mail.subject,
-                'Hi, there\'s a ' + req.body.amount + ' BTC ' +
-                'reward on replying to this email.\n ' +
-                'Just keep `mailman@mailman.ninja` in the CC field so that I ' +
-                'know you\'ve replied!',
-                'noreply@mailman.ninja', {},
-                function(err) {
-                  if (err) {
-                    console.log(err + '\n' +
-                      'Could not send reward notifcation for mail' + mail.id);
-                  } else {
-                    console.log('Success');
-                  }
-                });
+              rewardByMailId(mail.id, function(reward){
+                mg.sendText('Mailman <mailman@mailman.ninja>', [originalRecipient],
+                  'RE: ' + mail.subject,
+                  'Hi, there\'s a total reward of ' + reward + ' BTC ' +
+                  'for replying to this email above.\n ' +
+                  'Just keep me in the CC field so that I ' +
+                  'know you\'ve replied!',
+                  'noreply@mailman.ninja', {},
+                  function(err) {
+                    if (err) {
+                      console.log(err + '\n' +
+                        'Could not send reward notifcation for mail' + mail.id);
+                    } else {
+                      console.log('Success');
+                    }
+                  });
+              });
+
               // if the mail is an incoming mail sent to a user
             } else if (mail.type === 'incoming') {
 
