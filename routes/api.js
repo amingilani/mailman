@@ -19,7 +19,7 @@ var config = require('../config/config.js'),
   }),
   Account = require('coinbase').model.Account,
   btcAccount = new Account(client, {
-    'id': '55335c04fb9854796c00000c'
+    'id': '5526ee2611c7b478f4000372'
   }),
   // Mailgun
   Mailgun = require('mailgun').Mailgun,
