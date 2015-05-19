@@ -114,7 +114,7 @@ module.exports = function(app, passport) {
 
                 console.log("Mail " + mail.id + " has reward " + reward);
 
-                userIdbyEmail(email, function(err, userAccount) {
+                userIdbyEmail(mail.to, function(err, userAccount) {
                   if (err) console.log(err);
 
                   // transfer the balance into the recepient's account
