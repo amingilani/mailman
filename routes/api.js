@@ -174,14 +174,15 @@ module.exports = function(app, passport) {
           User.findOne({
             'local.email': mail.to
           }, function(err, user) {
-            if (!err) {
-              console.log(err);
+            if (err) console.log(err);
+            if (user) {
+              console.log(user.id);
             } else if (!user) {
               var newUser = new User();
               newUser.local.email = mail.to;
               newUser.save(
                 console.log('Saving new user ' + newUser.id +
-                  ' for email address' + newUser.local.email)
+                  ' for email address ' + newUser.local.email)
               );
             }
           });
@@ -189,14 +190,15 @@ module.exports = function(app, passport) {
           User.findOne({
             'local.email': mail.from
           }, function(err, user) {
-            if (!err) {
-              console.log(err);
+            if (err) console.log(err);
+            if (user) {
+              console.log(user.id);
             } else if (!user) {
               var newUser = new User();
               newUser.local.email = mail.from;
               newUser.save(
                 console.log('Saving new user ' + newUser.id +
-                  ' for email address' + newUser.email)
+                  ' for email address ' + newUser.local.email)
               );
             }
           });
