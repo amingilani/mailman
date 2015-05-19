@@ -67,7 +67,7 @@ module.exports = function(app, passport) {
 
       var payoutAddress = req.body['body-plain'].match(btcRegex)[0];
       // find the userId
-      userIdbyEmail(email, function(err, userId) {
+      userIdbyEmail(email, function(userId) {
 
         // find the user's balance
         userBalance(userId, function(err, balance) {
@@ -114,13 +114,13 @@ module.exports = function(app, passport) {
 
                 console.log("Mail " + mail.id + " has reward " + reward);
 
-                userIdbyEmail(mail.to, function(err, userAccount) {
+                userIdbyEmail(mail.to, function(err, userId) {
                   if (err) console.log(err);
 
                   // transfer the balance into the recepient's account
                   var rewardTransaction = {
                     "from": mailmanAccount,
-                    "to": userAccount.id, // the recepient of the original mail
+                    "to": userId, // the recepient of the original mail
                     "amount": reward
                   };
 
@@ -639,6 +639,7 @@ function userIdbyEmail(email, callback) {
   User.findOne({
     'local.email': emailAddress
   }, function(err, user) {
-    callback(err, user);
+    if (err) console.log(err);
+    callback(user.id);
   });
 }
