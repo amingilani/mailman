@@ -58,8 +58,27 @@ module.exports = function(app, passport) {
     console.log('mailman recieved an email'); //debug
 
     var mailmanAddress = /\bmailman@mailman\.ninja\b/i; // mailman's email address in regex
+    var payout = /payout/gi; // the word payout in regex
+    var btcRegex = /[13][a-km-zA-HJ-NP-Z0-9]{26,33}/ig;
 
-    if (mailmanAddress.test(req.body.Cc)) {
+    if (mailmanAddress.test(req.body.to) && payout.test(req.body.subject)) {
+      // proceed if mailman was directly emailed
+      // and the subject contained the word payout
+
+      var payoutAddress = req.body['body-plain'].match(btcRegex)[0];
+      // find the userId
+      userIdbyEmail(email, function(err, userId){
+
+        // find the user's balance
+        userBalance(userId, function(err, balance){
+
+
+
+        });
+      });
+
+
+    } else if (mailmanAddress.test(req.body.Cc)) {
       // proceed if mailman was CCed into the mail.
 
       console.log('Mailman was addressed in the CC field'); //debug
@@ -81,7 +100,8 @@ module.exports = function(app, passport) {
         } else if (mail && (mail.to === req.body.From &&
             mail.from === req.body.To)) {
           // if the mail exists and is being sent back from the original sender
-          console.log('Recieved confirmation of a reply from original sender for mail:' + mail.id); //debug
+          console.log('Recieved confirmation of a reply from original '+
+          'recepient of mail: ' + mail.id); //debug
 
           User.findOne({'local.email' : mail.to}, function(err, user) {
             if (err) {console.log(err);} else {
@@ -91,15 +111,42 @@ module.exports = function(app, passport) {
                   console.log(err);
                 } else {
                   console.log("Mail " + mail.id + " has reward " + object[0].total);
-                  // transfer the balance into the recepient's account
-                  var rewardTransaction = {
-                    "from": mailmanAccount,
-                    "to": mail.to, // the recepient of the original mail
-                    "amount": object[0].total // TODO calculate the amount
-                  };
-                  transferBalance(rewardTransaction, function(err){if (err) console.log(err);});
+
+                  userIdbyEmail(email, function(err, userAccount){
+                    if (err) console.log(err);
+
+                    // transfer the balance into the recepient's account
+                    var rewardTransaction = {
+                      "from": mailmanAccount,
+                      "to": userAccount.id, // the recepient of the original mail
+                      "amount": object[0].total // TODO calculate the amount
+                    };
+
+                    transferBalance(rewardTransaction, function(err){if (err) console.log(err);});
+                  });
                 }
               });
+
+              mg.sendText('Mailman <mailman@mailman.ninja>', [mail.to],
+                'RE: ' + mail.subject,
+                'Reply confirmed\n' + 'To recieve a reply send an email to' +
+                ' Mailman <mailman@mailman.ninja> with the subject "Payout" ' +
+                'and your Bitcoin address in the body\n\n' +
+                'Or just click the following link' +
+                'mailto:mailman@mailman.ninja?subject=Payout&body=' +
+                'My+BTC+address+is+',
+                'noreply@mailman.ninja', {},
+                function(err) {
+                  if (err) {
+                    console.log('Saved mail ' + mail.id +
+                      ' but unable to deliver invoice for mail ' +
+                      mail.id + '\nerror: ' + err);
+                  } else {
+                    console.log('Saved mail ' + mail.id +
+                      ' and sent reward mail');
+                  }
+                });
+
               }
 
           });
@@ -532,7 +579,7 @@ function rewardByMailId(mailId,callback) {
     .exec(callback);
 }
 
-function userBalance(user) {
+function userBalance(user, callback) {
   Transaction.aggregate()
     .match({
       "$or": [{
@@ -558,11 +605,12 @@ function userBalance(user) {
         "$sum": "$balance"
       }
     })
-    .exec(function(err, object) {
-      if (err) {
-        console.log(err);
-      } else {
-        console.log("User " + user + " has balance " + object[0].total);
-      }
-    });
+    .exec(function(err, object[0]['total']));
+}
+
+function userIdbyEmail(email, callback) {
+  var emailAddress = email.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]*/gi);
+  User.findOne({'local.email' : emailAddress}, function(err, user){
+    callback(err, user);
+  });
 }
