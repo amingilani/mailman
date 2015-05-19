@@ -511,15 +511,18 @@ function transferBalance(transactionObject, acallback) {
 function rewardByMailId(mailId,callback) {
   Transaction.aggregate()
     .match({
-      "$and": [{
-        "mailId": mailId
-      }, {
-        "creditAccount": mailmanAccount
-      }]
+      "$and": [
+        {"mailId": mailId},
+        {"$or" : [{"debitAccount": mailmanAccount},{"creditAccount": mailmanAccount}]}
+      ]
     })
-    .project({
-      "balance": "$amount"
-    })
+
+    .project(
+      { "balance": { "$cond": [
+                    {"$eq": [ "$debitAccount", mailmanAccount ]},
+                    {"$multiply": [ -1, "$amount" ]},
+                    "$amount"
+                 ]}})
     .group({
       "_id": mailId,
       "total": {
