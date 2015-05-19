@@ -133,12 +133,8 @@ module.exports = function(app, passport) {
 
               mg.sendText('Mailman <mailman@mailman.ninja>', [mail.to],
                 'RE: ' + mail.subject,
-                'Reply confirmed\n' + 'To recieve a reply send an email to' +
-                ' Mailman <mailman@mailman.ninja> with the subject "Payout" ' +
-                'and your Bitcoin address in the body\n\n' +
-                'Or just click the following link:\n' +
-                'mailto:mailman@mailman.ninja?subject=Payout&body=' +
-                'My+BTC+address+is+',
+                'Reply confirmed!\n' +
+                'Wonderful, I\'ll deliver your reward in a just a moment',
                 'noreply@mailman.ninja', {},
                 function(err) {
                   if (err) {
