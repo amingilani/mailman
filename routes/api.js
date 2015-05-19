@@ -179,7 +179,7 @@ module.exports = function(app, passport) {
               console.log(user.id);
             } else if (!user) {
               var newUser = new User();
-              newUser.local.email = mail.to;
+              newUser.local.email = mail.to.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]*/gi)[0];
               newUser.save(
                 console.log('Saving new user ' + newUser.id +
                   ' for email address ' + newUser.local.email)
@@ -195,7 +195,7 @@ module.exports = function(app, passport) {
               console.log(user.id);
             } else if (!user) {
               var newUser = new User();
-              newUser.local.email = mail.from;
+              newUser.local.email = mail.from.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]*/gi)[0];
               newUser.save(
                 console.log('Saving new user ' + newUser.id +
                   ' for email address ' + newUser.local.email)
