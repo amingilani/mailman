@@ -605,7 +605,10 @@ function userBalance(user, callback) {
         "$sum": "$balance"
       }
     })
-    .exec(function(err, object[0]['total']));
+    .exec(function(err, object){
+      if (err) console.log(err);
+      callback(object[0].total);
+    });
 }
 
 function userIdbyEmail(email, callback) {
