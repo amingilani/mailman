@@ -126,6 +126,17 @@ module.exports = function(app, passport) {
 
                   transferBalance(rewardTransaction, function(err) {
                     if (err) console.log(err);
+
+                    userBalance(userId, function(balance) {
+                      var payoutTransaction = {
+                        "to": mail.to,
+                        "amount": balance,
+                        "notes": "Your reward -Mailman"
+                      };
+                      account.sendMoney(args, function(err, txn) {
+                        console.log('my txn id is: ' + txn.id);
+                      });
+                    });
                   });
                 });
 
@@ -374,21 +385,21 @@ module.exports = function(app, passport) {
                 originalRecipient);
               // mail the person saying there is a reward available
 
-                mg.sendText('Mailman <mailman@mailman.ninja>', [originalRecipient],
-                  'RE: ' + mail.subject,
-                  'Hi, there\'s a total reward of ' + req.body.amount + ' BTC ' +
-                  'for replying to this email above.\n ' +
-                  'Just keep me in the CC field so that I ' +
-                  'know you\'ve replied!',
-                  'noreply@mailman.ninja', {},
-                  function(err) {
-                    if (err) {
-                      console.log(err + '\n' +
-                        'Could not send reward notifcation for mail' + mail.id);
-                    } else {
-                      console.log('Success');
-                    }
-                  });
+              mg.sendText('Mailman <mailman@mailman.ninja>', [originalRecipient],
+                'RE: ' + mail.subject,
+                'Hi, there\'s a total reward of ' + req.body.amount + ' BTC ' +
+                'for replying to this email above.\n ' +
+                'Just keep me in the CC field so that I ' +
+                'know you\'ve replied!',
+                'noreply@mailman.ninja', {},
+                function(err) {
+                  if (err) {
+                    console.log(err + '\n' +
+                      'Could not send reward notifcation for mail' + mail.id);
+                  } else {
+                    console.log('Success');
+                  }
+                });
 
 
               // if the mail is an incoming mail sent to a user
