@@ -172,7 +172,7 @@ module.exports = function(app, passport) {
           // check if the sender and reciever have accounts
 
           User.findOne({
-            'local.email': mail.to
+            'local.email': mail.to.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]*/gi)[0]
           }, function(err, user) {
             if (err) console.log(err);
             if (user) {
@@ -188,7 +188,7 @@ module.exports = function(app, passport) {
           });
 
           User.findOne({
-            'local.email': mail.from
+            'local.email': mail.from.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]*/gi)[0]
           }, function(err, user) {
             if (err) console.log(err);
             if (user) {
