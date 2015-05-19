@@ -386,8 +386,8 @@ module.exports = function(app, passport) {
 
               mg.sendText('Mailman <mailman@mailman.ninja>', [originalRecipient],
                 'RE: ' + mail.subject,
-                'Hi, there\'s a total reward of ' + req.body.amount + ' BTC ' +
-                'for replying to this email above.\n ' +
+                'Hi, there\'s a new ' + req.body.amount + ' BTC reward ' +
+                'for replying to the email above.\n' +
                 'Just keep me in the CC field so that I ' +
                 'know you\'ve replied!',
                 'noreply@mailman.ninja', {},
