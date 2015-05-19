@@ -14,9 +14,8 @@ var config = require('../config/config.js'),
   fee = 1 / 2, //mailman keeps half of the money TODO find a better fee rate
   Client = require('coinbase').Client,
   client = new Client({
-    'apiKey': config.coinbase.testnet.key,
-    'apiSecret': config.coinbase.testnet.secret,
-    'baseApiUri': 'https://api.sandbox.coinbase.com/v1/'
+    'apiKey': config.coinbase.livenet.key,
+    'apiSecret': config.coinbase.livenet.secret
   }),
   Account = require('coinbase').model.Account,
   btcAccount = new Account(client, {
