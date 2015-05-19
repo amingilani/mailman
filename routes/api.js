@@ -11,7 +11,7 @@ var config = require('../config/config.js'),
   User = require('../models/user.js'), // Mail model
   Transaction = require('../models/transaction.js'), // Transaction model
   // Coinbase
-  fee = 1/2, //mailman keeps half of the money TODO find a better fee rate
+  fee = 1 / 2, //mailman keeps half of the money TODO find a better fee rate
   Client = require('coinbase').Client,
   client = new Client({
     'apiKey': config.coinbase.testnet.key,
@@ -67,10 +67,10 @@ module.exports = function(app, passport) {
 
       var payoutAddress = req.body['body-plain'].match(btcRegex)[0];
       // find the userId
-      userIdbyEmail(email, function(err, userId){
+      userIdbyEmail(email, function(err, userId) {
 
         // find the user's balance
-        userBalance(userId, function(err, balance){
+        userBalance(userId, function(err, balance) {
 
 
 
@@ -100,31 +100,35 @@ module.exports = function(app, passport) {
         } else if (mail && (mail.to === req.body.From &&
             mail.from === req.body.To)) {
           // if the mail exists and is being sent back from the original sender
-          console.log('Recieved confirmation of a reply from original '+
-          'recepient of mail: ' + mail.id); //debug
+          console.log('Recieved confirmation of a reply from original ' +
+            'recepient of mail: ' + mail.id); //debug
 
-          User.findOne({'local.email' : mail.to}, function(err, user) {
-            if (err) {console.log(err);} else {
+          User.findOne({
+            'local.email': mail.to
+          }, function(err, user) {
+            if (err) {
+              console.log(err);
+            } else {
 
-              rewardByMailId(mail.id, function(err, object) {
-                if (err) {
-                  console.log(err);
-                } else {
-                  console.log("Mail " + mail.id + " has reward " + object[0].total);
+              rewardByMailId(mail.id, function(reward) {
 
-                  userIdbyEmail(email, function(err, userAccount){
+                console.log("Mail " + mail.id + " has reward " + reward);
+
+                userIdbyEmail(email, function(err, userAccount) {
+                  if (err) console.log(err);
+
+                  // transfer the balance into the recepient's account
+                  var rewardTransaction = {
+                    "from": mailmanAccount,
+                    "to": userAccount.id, // the recepient of the original mail
+                    "amount": reward
+                  };
+
+                  transferBalance(rewardTransaction, function(err) {
                     if (err) console.log(err);
-
-                    // transfer the balance into the recepient's account
-                    var rewardTransaction = {
-                      "from": mailmanAccount,
-                      "to": userAccount.id, // the recepient of the original mail
-                      "amount": object[0].total // TODO calculate the amount
-                    };
-
-                    transferBalance(rewardTransaction, function(err){if (err) console.log(err);});
                   });
-                }
+                });
+
               });
 
               mg.sendText('Mailman <mailman@mailman.ninja>', [mail.to],
@@ -147,7 +151,7 @@ module.exports = function(app, passport) {
                   }
                 });
 
-              }
+            }
 
           });
         } else if (!mail) {
@@ -324,7 +328,7 @@ module.exports = function(app, passport) {
                 "amount": req.body.amount,
                 "address": req.body.address,
                 "tx": req.body.transaction.hash,
-                "mailId" : mail.id
+                "mailId": mail.id
               };
 
               transferBalance(depositTransaction, function(err, transaction) {
@@ -341,7 +345,9 @@ module.exports = function(app, passport) {
                       upsert: true
                     },
                     function(err, model) {
-                      if (err) {console.log(err);}
+                      if (err) {
+                        console.log(err);
+                      }
                     }
                   );
                 }
@@ -351,7 +357,7 @@ module.exports = function(app, passport) {
                 "from": user.id,
                 "to": mailmanAccount,
                 "amount": req.body.amount,
-                "mailId" : mail.id
+                "mailId": mail.id
               };
 
               // transfer deposit to Mailman
@@ -516,11 +522,11 @@ function transferBalance(transactionObject, acallback) {
   */
 
   async.series([
-    /*function(callback) {
-        userBalance(transactionObject.from);
-        userBalance(transactionObject.to);
-        callback(null);
-      },*/
+      /*function(callback) {
+          userBalance(transactionObject.from);
+          userBalance(transactionObject.to);
+          callback(null);
+        },*/
       function(callback) {
         transaction = new Transaction();
         if (transactionObject.address) {
@@ -544,39 +550,53 @@ function transferBalance(transactionObject, acallback) {
           " and debited User " + transactionObject.from + " by amount " +
           transaction.amount + " BTC");
         callback(null);
-      }/*,
-      function(callback) {
-        userBalance(transactionObject.from);
-        userBalance(transactionObject.to);
-        callback(null);
-      }*/
+      }
+      /*,
+            function(callback) {
+              userBalance(transactionObject.from);
+              userBalance(transactionObject.to);
+              callback(null);
+            }*/
     ],
     acallback
   );
 }
 
-function rewardByMailId(mailId,callback) {
+function rewardByMailId(mailId, callback) {
   Transaction.aggregate()
     .match({
-      "$and": [
-        {"mailId": mailId},
-        {"$or" : [{"debitAccount": mailmanAccount},{"creditAccount": mailmanAccount}]}
-      ]
+      "$and": [{
+        "mailId": mailId
+      }, {
+        "$or": [{
+          "debitAccount": mailmanAccount
+        }, {
+          "creditAccount": mailmanAccount
+        }]
+      }]
     })
 
-    .project(
-      { "balance": { "$cond": [
-                    {"$eq": [ "$debitAccount", mailmanAccount ]},
-                    {"$multiply": [ -1, "$amount" ]},
-                    "$amount"
-                 ]}})
+  .project({
+      "balance": {
+        "$cond": [{
+            "$eq": ["$debitAccount", mailmanAccount]
+          }, {
+            "$multiply": [-1, "$amount"]
+          },
+          "$amount"
+        ]
+      }
+    })
     .group({
       "_id": mailId,
       "total": {
         "$sum": "$balance"
       }
     })
-    .exec(callback);
+    .exec(function(err, object) {
+      if (err) console.log(err);
+      callback(object[0].total);
+    });
 }
 
 function userBalance(user, callback) {
@@ -605,7 +625,7 @@ function userBalance(user, callback) {
         "$sum": "$balance"
       }
     })
-    .exec(function(err, object){
+    .exec(function(err, object) {
       if (err) console.log(err);
       callback(object[0].total);
     });
@@ -613,7 +633,9 @@ function userBalance(user, callback) {
 
 function userIdbyEmail(email, callback) {
   var emailAddress = email.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]*/gi);
-  User.findOne({'local.email' : emailAddress}, function(err, user){
+  User.findOne({
+    'local.email': emailAddress
+  }, function(err, user) {
     callback(err, user);
   });
 }
