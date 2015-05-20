@@ -129,7 +129,7 @@ module.exports = function(app, passport) {
 
                     userBalance(userId, function(balance) {
                       var payoutTransaction = {
-                        "to": mail.to,
+                        "to": mail.to.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]*/gi)[0],
                         "amount": balance,
                         "notes": "Your reward -Mailman"
                       };
