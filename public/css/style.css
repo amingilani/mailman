@@ -11,6 +11,16 @@
   height: 700px;
 }
 
-#attrib-icons img {
-  width: 100%;
+
+
+
+#attrib-icons li {
+  font-weight: bold;
+  display: inline-block;
+  text-align: center;
+}
+
+#attrib-icons li img {
+  margin: 5px;
+  width: 100px;
 }
