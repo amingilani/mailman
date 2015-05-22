@@ -4,7 +4,7 @@
 var config = require('../config/config.js'),
   secret = config.secret,
   siteDomain = config.siteDomain,
-  mailDomain = consig.mailDomain,
+  mailDomain = config.mailDomain,
   // Express
   express = require('express'),
   router = express.Router(),
