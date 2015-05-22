@@ -3,6 +3,8 @@
 // Config
 var config = require('../config/config.js'),
   secret = config.secret,
+  siteDomain = config.siteDomain,
+  mailDomain = consig.mailDomain,
   // Express
   express = require('express'),
   router = express.Router(),
@@ -35,7 +37,11 @@ var config = require('../config/config.js'),
   // Deposit Account
   depositAccount = "deposit", //that's 1337DEP
   withdrawalAccount = "withdrawal", //that's 1337WIT
-  mailmanAccount = "mailman"; //that's 1337COOL
+  mailmanAccount = "mailman", //that's 1337COOL
+
+  // Mailman
+  mailmanAddressReg = new RegExp("mailman@"+ mailDomain.replace(/\./g, "\\."), "ig");
+  mailmanAddress = "mailman@" + mailDomain;
 
 
 module.exports = function(app, passport) {
@@ -57,11 +63,10 @@ module.exports = function(app, passport) {
 
     console.log('mailman recieved an email'); //debug
 
-    var mailmanAddress = /\bmailman@mailman\.ninja\b/i; // mailman's email address in regex
     var payout = /payout/gi; // the word payout in regex
-    var btcRegex = /[13][a-km-zA-HJ-NP-Z0-9]{26,33}/ig;
+    var btcRegex = /[13][a-km-zA-HJ-NP-Z0-9]{26,33}/ig; // BTC addresses in Regex
 
-    if (mailmanAddress.test(req.body.to) && payout.test(req.body.subject)) {
+    if (mailmanAddressReg.test(req.body.to) && payout.test(req.body.subject)) {
       // proceed if mailman was directly emailed
       // and the subject contained the word payout
 
@@ -78,7 +83,7 @@ module.exports = function(app, passport) {
       });
 
 
-    } else if (mailmanAddress.test(req.body.Cc)) {
+    } else if (mailmanAddressReg.test(req.body.Cc)) {
       // proceed if mailman was CCed into the mail.
 
       console.log('Mailman was addressed in the CC field'); //debug
@@ -142,11 +147,11 @@ module.exports = function(app, passport) {
 
               });
 
-              mg.sendText('Mailman <mailman@mailman.ninja>', [mail.to],
+              mg.sendText('Mailman <' + mailmanAddress + '>', [mail.to],
                 'RE: ' + mail.subject,
                 'Reply confirmed!\n' +
                 'Wonderful, I\'ll deliver your reward in a just a moment',
-                'noreply@mailman.ninja', {},
+                'noreply@' + mailDomain + '', {},
                 function(err) {
                   if (err) {
                     console.log('Saved mail ' + mail.id +
@@ -221,7 +226,7 @@ module.exports = function(app, passport) {
           }, secret);
 
           btcAccount.createAddress({
-            "callback_url": 'http://the.mailman.ninja/api/payment/' +
+            "callback_url": 'http://' + siteDomain + '/api/payment/' +
               mail.id + '?token=' + callbackToken,
             "label": ""
           }, function(err, address) {
@@ -237,10 +242,10 @@ module.exports = function(app, passport) {
               mail.btcAddress = address.address;
               mail.save(
                 // send an invoice to the sender
-                mg.sendText('Mailman <mailman@mailman.ninja>', [mail.sender],
+                mg.sendText('Mailman <mailman@' + mailDomain + '>', [mail.sender],
                   'RE: ' + mail.subject,
                   'Hi, pay the reward here: ' + mail.btcAddress,
-                  'noreply@mailman.ninja', {},
+                  'noreply@' + mailDomain + '>', {},
                   function(err) {
                     if (err) {
                       console.log('Saved mail ' + mail.id +
@@ -385,13 +390,13 @@ module.exports = function(app, passport) {
                 originalRecipient);
               // mail the person saying there is a reward available
 
-              mg.sendText('Mailman <mailman@mailman.ninja>', [originalRecipient],
+              mg.sendText('Mailman <mailman@' + mailDomain + '>', [originalRecipient],
                 'RE: ' + mail.subject,
                 'Hi, there\'s a new ' + req.body.amount + ' BTC reward ' +
                 'for replying to the email above.\n' +
                 'Just keep me in the CC field so that I ' +
                 'know you\'ve replied!',
-                'noreply@mailman.ninja', {},
+                'noreply@' + mailDomain + '', {},
                 function(err) {
                   if (err) {
                     console.log(err + '\n' +
@@ -411,13 +416,13 @@ module.exports = function(app, passport) {
                 'local.username': mail.username
               }, function(err, user) {
 
-                mg.sendText('Mailman <mailman@mailman.ninja>', [mail.to],
+                mg.sendText('Mailman <mailman@' + mailDomain + '>', [mail.to],
                   'RE: ' + mail.subject,
                   'Hi, there\'s a ' + req.body.amount + ' BTC ' +
                   'reward on replying to this email.\n ' +
-                  'Just keep `mailman@mailman.ninja` in the CC field so ' +
+                  'Just keep `mailman@' + mailDomain + '` in the CC field so ' +
                   'that I know you\'ve replied!',
-                  'noreply@mailman.ninja', {},
+                  'noreply@' + mailDomain + '', {},
                   function(err) {
                     if (err) console.log('Unable to deliver invoice for mail ' +
                       mail.id + '\nerror: ' + err);
@@ -465,7 +470,7 @@ module.exports = function(app, passport) {
     }, secret);
 
     var addressArgs = {
-      'callback_url': 'http://the.mailman.ninja/api/payment/' + mail.id +
+      'callback_url': 'http://' + siteDomain + '/api/payment/' + mail.id +
         '?token=' + callbackToken,
       'label': mail.id
     };
@@ -481,11 +486,11 @@ module.exports = function(app, passport) {
         mail.save();
 
         // send an invoice to the sender
-        mg.sendText('Mailman <mailman@mailman.ninja>', [mail.sender],
+        mg.sendText('Mailman <mailman@' + mailDomain + '>', [mail.sender],
           'RE: ' + mail.subject,
           'Hi, your email will only be delivered if you pay for its delivery.\n' +
           'Please pay at this address: ' + mail.btcAddress,
-          'noreply@mailman.ninja', {},
+          'noreply@' + mailDomain + '', {},
           function(err) {
             if (err) console.log('Unable to deliver invoice for mail ' +
               mail.id + '\nerror: ' + err);

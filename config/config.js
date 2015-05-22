@@ -2,6 +2,8 @@ var config = {};
 
 // Mailman config
 config.secret = process.env.secret;
+config.mailDomain = process.env.sitedomain; // e.g. the.mailman.ninja for http://the.mailman.ninja/
+config.siteDomain = process.env.maildomain; // e.g. mailman.ninja for mailman@mailman.ninja
 
 // Mailgun config
 config.mailgun = {};
