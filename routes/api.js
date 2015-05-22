@@ -3,8 +3,8 @@
 // Config
 var config = require('../config/config.js'),
   secret = config.secret,
-  siteDomain = config.siteDomain,
-  mailDomain = config.mailDomain,
+  domainSite = config.domainSite,
+  domainMail = config.domainMail,
   // Express
   express = require('express'),
   router = express.Router(),
@@ -40,8 +40,8 @@ var config = require('../config/config.js'),
   mailmanAccount = "mailman", //that's 1337COOL
 
   // Mailman
-  mailmanAddressReg = new RegExp("mailman@"+ mailDomain.replace(/\./g, "\\."), "ig");
-  mailmanAddress = "mailman@" + mailDomain;
+  mailmanAddressReg = new RegExp("mailman@"+ domainMail.replace(/\./g, "\\."), "ig");
+  mailmanAddress = "mailman@" + domainMail;
 
 
 module.exports = function(app, passport) {
@@ -151,7 +151,7 @@ module.exports = function(app, passport) {
                 'RE: ' + mail.subject,
                 'Reply confirmed!\n' +
                 'Wonderful, I\'ll deliver your reward in a just a moment',
-                'noreply@' + mailDomain + '', {},
+                'noreply@' + domainMail + '', {},
                 function(err) {
                   if (err) {
                     console.log('Saved mail ' + mail.id +
@@ -226,7 +226,7 @@ module.exports = function(app, passport) {
           }, secret);
 
           btcAccount.createAddress({
-            "callback_url": 'http://' + siteDomain + '/api/payment/' +
+            "callback_url": 'http://' + domainSite + '/api/payment/' +
               mail.id + '?token=' + callbackToken,
             "label": ""
           }, function(err, address) {
@@ -242,10 +242,10 @@ module.exports = function(app, passport) {
               mail.btcAddress = address.address;
               mail.save(
                 // send an invoice to the sender
-                mg.sendText('Mailman <mailman@' + mailDomain + '>', [mail.sender],
+                mg.sendText('Mailman <mailman@' + domainMail + '>', [mail.sender],
                   'RE: ' + mail.subject,
                   'Hi, pay the reward here: ' + mail.btcAddress,
-                  'noreply@' + mailDomain + '>', {},
+                  'noreply@' + domainMail + '>', {},
                   function(err) {
                     if (err) {
                       console.log('Saved mail ' + mail.id +
@@ -390,13 +390,13 @@ module.exports = function(app, passport) {
                 originalRecipient);
               // mail the person saying there is a reward available
 
-              mg.sendText('Mailman <mailman@' + mailDomain + '>', [originalRecipient],
+              mg.sendText('Mailman <mailman@' + domainMail + '>', [originalRecipient],
                 'RE: ' + mail.subject,
                 'Hi, there\'s a new ' + req.body.amount + ' BTC reward ' +
                 'for replying to the email above.\n' +
                 'Just keep me in the CC field so that I ' +
                 'know you\'ve replied!',
-                'noreply@' + mailDomain + '', {},
+                'noreply@' + domainMail + '', {},
                 function(err) {
                   if (err) {
                     console.log(err + '\n' +
@@ -416,13 +416,13 @@ module.exports = function(app, passport) {
                 'local.username': mail.username
               }, function(err, user) {
 
-                mg.sendText('Mailman <mailman@' + mailDomain + '>', [mail.to],
+                mg.sendText('Mailman <mailman@' + domainMail + '>', [mail.to],
                   'RE: ' + mail.subject,
                   'Hi, there\'s a ' + req.body.amount + ' BTC ' +
                   'reward on replying to this email.\n ' +
-                  'Just keep `mailman@' + mailDomain + '` in the CC field so ' +
+                  'Just keep `mailman@' + domainMail + '` in the CC field so ' +
                   'that I know you\'ve replied!',
-                  'noreply@' + mailDomain + '', {},
+                  'noreply@' + domainMail + '', {},
                   function(err) {
                     if (err) console.log('Unable to deliver invoice for mail ' +
                       mail.id + '\nerror: ' + err);
@@ -470,7 +470,7 @@ module.exports = function(app, passport) {
     }, secret);
 
     var addressArgs = {
-      'callback_url': 'http://' + siteDomain + '/api/payment/' + mail.id +
+      'callback_url': 'http://' + domainSite + '/api/payment/' + mail.id +
         '?token=' + callbackToken,
       'label': mail.id
     };
@@ -486,11 +486,11 @@ module.exports = function(app, passport) {
         mail.save();
 
         // send an invoice to the sender
-        mg.sendText('Mailman <mailman@' + mailDomain + '>', [mail.sender],
+        mg.sendText('Mailman <mailman@' + domainMail + '>', [mail.sender],
           'RE: ' + mail.subject,
           'Hi, your email will only be delivered if you pay for its delivery.\n' +
           'Please pay at this address: ' + mail.btcAddress,
-          'noreply@' + mailDomain + '', {},
+          'noreply@' + domainMail + '', {},
           function(err) {
             if (err) console.log('Unable to deliver invoice for mail ' +
               mail.id + '\nerror: ' + err);
