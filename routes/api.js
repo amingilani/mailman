@@ -139,6 +139,7 @@ module.exports = function(app, passport) {
                         "notes": "Your reward -Mailman"
                       };
                       btcAccount.sendMoney(payoutTransaction, function(err, txn) {
+                        if (err) console.log(err);
                         console.log('my txn id is: ' + txn.id);
                       });
                     });
