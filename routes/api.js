@@ -133,15 +133,17 @@ module.exports = function(app, passport) {
                     if (err) console.log(err);
 
                     userBalance(userId, function(balance) {
-                      var payoutTransaction = {
-                        "to": mail.to.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]*/gi)[0],
-                        "amount": balance,
-                        "notes": "Your reward -Mailman"
-                      };
-                      btcAccount.sendMoney(payoutTransaction, function(err, txn) {
-                        if (err) console.log(err);
-                        console.log('my txn id is: ' + txn.id);
-                      });
+//                      var payoutTransaction = {
+//                        "to": mail.to.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]*/gi)[0],
+//                        "amount": balance,
+//                        "notes": "Your reward -Mailman"
+//                      };
+
+//                      btcAccount.sendMoney(payoutTransaction, function(err, txn) {
+//                        if (err) console.log(err);
+//                        console.log('my txn id is: ' + txn.id);
+//                      });
+                        console.log(balance);
                     });
                   });
                 });
